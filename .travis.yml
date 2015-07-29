@@ -1,8 +1,12 @@
-language:
-  - python
-python:
-  - "2.7"
-compiler:
-  - gcc
+env:
+  global:
+    - BRANCH=v1.0.0
+    - QUIET=1
+
+sudo: true
+
+install:
+  - curl -sLo - http://j.mp/install-travis-docker | sh -xe
+
 script:
-  - docker run --run ubuntu:14.04 /bin/ls
+  - ./run 'docker run --rm ubuntu:14.04 /bin/ls'
