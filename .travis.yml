@@ -18,5 +18,4 @@ install:
 before_script:
   - source /opt/ros/$ROS_DISTRO/setup.bash 
 script:
-  - ls -al
   - catkin_make -j2
