@@ -1,8 +1,3 @@
-env:
-  global:
-    - BRANCH=v1.0.0
-    - QUIET=1
-
 sudo: true
 
 install:
