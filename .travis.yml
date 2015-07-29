@@ -10,5 +10,11 @@ before_install:
   - sudo apt-get install -qq -y python-rosdep python-wstool ros-$ROS_DISTRO-catkin
   - sudo rosdep init
   - rosdep update
+install:
+  - mkdir ~/catkin_ws/src
+  - ln -s ~/catkin_ws/src/python_ros_interface .
+  - cd ~/catkin_ws
+  - rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 script:
   - ls -al
+  - catkin_make -j2
