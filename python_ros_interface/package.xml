@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package>
+  <name>python_ros_interface</name>
+  <version>0.0.0</version>
+  <description>Simplified ROS Python interfaces</description>
+  <maintainer email="otamachan@gmail.com">Tamaki Nishino</maintainer>
+  <license>Apache2</license>
+  <url type="website">http://wiki.ros.org/python_ros_interface</url>
+  <buildtool_depend>catkin</buildtool_depend>
+  <export/>
+</package>
