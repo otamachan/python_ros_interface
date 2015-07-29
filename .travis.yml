@@ -1,7 +1,16 @@
-sudo: true
+sudo: false
 
-install:
-  - curl -sLo - http://j.mp/install-travis-docker | sh -xe
-
+before_install:
+  - export ROS_DISTRO=hydro
+  - export ROS_DISTRO=hydro
+  - export CI_SOURCE_PATH=$(pwd)
+  - export REPOSITORY_NAME=${PWD##*/}
+  - echo "Testing branch $TRAVIS_BRANCH of $REPOSITORY_NAME"
+  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
+  - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+  - apt-get update -qq
+  - apt-get install -qq -y python-rosdep python-wstool ros-$ROS_DISTRO-catkin
+  - rosdep init
+  - rosdep update
 script:
-  - ./run 'docker run --rm ubuntu:14.04 /bin/ls'
+  - ls -al
