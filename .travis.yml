@@ -1,27 +1,8 @@
 language:
-  - cpp
   - python
 python:
   - "2.7"
 compiler:
   - gcc
-before_install:
-  - export ROS_DISTRO=indigo
-  - export CI_SOURCE_PATH=$(pwd)
-  - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu trusty main" > /etc/apt/sources.list.d/ros-latest.list'
-  - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq -y python-rosdep python-catkin-tools ros-$ROS_DISTRO-catkin
-  - sudo rosdep init
-  - rosdep update
-install:
-  - mkdir -p ~/ws/src
-  - ln -s . ~/ws/src/python_ros_interface
-  - cd ~/ws
-  - catkin init
-  - catkin install
-  - rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
-before_script:
-  - source /opt/ros/$ROS_DISTRO/setup.bash  
 script:
-  - catkin build
+  - docker run --run ubuntu:14.04 /bin/ls
