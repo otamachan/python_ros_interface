@@ -7,8 +7,9 @@ import genpy
 import rosservice
 import rostopic
 import actionlib
-from .tf2 import Tf2Wrapper
 from rospy import ROSException
+from .tf2 import Tf2Wrapper
+from .exceptions import *
 
 _TIMEOUT = 5.0
 _POLLING = 20
@@ -30,11 +31,6 @@ def _wait_until(condition, timeout=None, polling=_POLLING):
         rate.sleep()
     return condition()
 
-class TimeoutException(RuntimeError):
-    pass
-class NotResolvableException(RuntimeError):
-    pass
-
 class ROSService(object):
     u"""
     Provide ROS Service wrapper
@@ -49,14 +45,6 @@ class ROSService(object):
     Args:
         service_name: ROS service name
         timeout: Timeout to wait for the service[s] (default: :const:`_TIMEOUT`)
-
-    Example:
-
-        .. code-block:: python
-
-            set_logger_level = ROSService('/namespace/node/set_logger_level')
-            set_logger_level('node.class', 'DEBUG')
-            print set_logger_level.request()
 
     Attributes:
         name: ROS service name
@@ -127,29 +115,32 @@ class ROSAction(object):
         action_name: ROS action name
         timeout: Timeout to wait for the action server[s] (default: :const:`_TIMEOUT`)
 
-    Example:
-
-        .. code-block:: python
-
-            fibonacci = ROSAction('/fibonacci')
-            print fibonacci(4)
-
-    Example:
-
-        .. code-block:: python
-
-            fibonacci = ROSAction('/fibonacci')
-            goal = fibonacci.goal(4)
-            # access SimpleActionClient properties
-            fibonacci.set_goal(goal)
-            fibonacci.wait_for_result()
-            print fibonacci.get_result()
-
     Attributes:
         name: ROS action name
 
     """
     _action_class_cache = {}
+    PENDING = 0
+    ACTIVE = 1
+    PREEMPTED = 2
+    SUCCEEDED = 3
+    ABORTED = 4
+    REJECTED = 5
+    PREEMPTING = 6
+    RECALLING = 7
+    RECALLED = 8
+    LOST = 9
+    GOALIDS = {0: 'PENDING',
+               1: 'ACTIVE',
+               2: 'PREEMPTED',
+               3: 'SUCCEEDED',
+               4: 'ABORTED',
+               5: 'REJECTED',
+               6: 'PREEMPTING',
+               7: 'RECALLING',
+               8: 'RECALLED',
+               9: 'LOST'}
+    TERMINAL_IDS = (3, 4, 5, 7, 8)
     def __init__(self, action_name, timeout=_TIMEOUT):
         self.name = action_name
         self._action_client = None
@@ -191,11 +182,6 @@ class ROSAction(object):
         Raises:
             NotResolvableException:
 
-        Example:
-            .. code-block:: python
-
-                fibonacci = ROSAction('/fibonacci')
-                ret = fibonacci(4, timeout=3.0)
         """
         self._resolve()
         if 'timeout' in kwargs:
@@ -205,9 +191,9 @@ class ROSAction(object):
             timeout = 0.0
         goal = self.goal(*args, **kwargs)
         rospy.logdebug("Calling action %s timeout=%f", self.name, timeout)
-        res = self._action_client.send_goal_and_wait(goal, execute_timeout=rospy.Duration(timeout))
-        rospy.logdebug("Returned from action %s state[%s]", self.name, res)
-        return res
+        state = self._action_client.send_goal_and_wait(goal, execute_timeout=rospy.Duration(timeout))
+        rospy.logdebug("Returned from action %s state[%s]", self.name, state)
+        return self._action_client.get_result()
 
     def goal(self, *args, **kwargs):
         u"""
@@ -250,34 +236,6 @@ class ROSTopic(object):
         publisher_wait_subscribers:
         publisher_timeout:
         **kwargs:
-
-    Example:
-
-        .. code-block:: python
-
-            image_raw = ROSTopic('/camera/image_raw')
-            print image_raw.get()
-    Example:
-
-        .. code-block:: python
-
-            image_raw = ROSTopic('/camera/image_raw')
-            image_raw.subscribe()
-            print image_raw.get()
-    Example:
-
-        .. code-block:: python
-
-            def callback(data):
-                 print data
-            image_raw = ROSTopic('/camera/image_raw')
-            image_raw.subscribe(callback=callback)
-    Example:
-
-        .. code-block:: python
-
-            chatter = ROSTopic('/chatter')
-            chatter.put('Hello World')
 
     Attributes:
         name:
@@ -446,22 +404,6 @@ class ROSParam(object):
         param_name:
         cache:
 
-    Example:
-
-        .. code-block:: python
-
-            dgain = ROSParam('/gains/dgain')
-            x = dgain.get()
-            dgain.set(4.0)
-
-            igain = ROSParam('/gains/igain')
-            y = param.get(0.0) # return 0.0 if the param doesn't exist
-
-            gains = ROSParam('/gains')
-            pgain = gains.get(suffix='pgain')
-            pgain2 = gains.get()['pgain'] # same above
-            param.set(2.1, suffix='pgain') # with default_value
-
     Attributes:
         name:
     """
@@ -575,33 +517,6 @@ class ROSInterface(object):
     Args:
          prefix:
          properties:
-
-    Example:
-
-        .. code-block:: python
-
-            class Foo(ROSInterface):
-                 _properties = {'fibonacci': ROSAction(),
-                                'set_logger_level': ROSService(),
-                                'chatter': ROSTopic(),
-                                'some_topic': ROSTopic(),
-                                'param': ROSParam()}
-            foo = Foo('/namespace/hoge')
-            print foo.fibonacci(3)
-            print foo.set_logger_level('node', 'INFO')
-            foo.chatter.put('hello world')
-            print foo.some_topic.get()
-            print foo.param
-            foo.param = 2
-            print foo.params['foo'].clear_cache()
-
-    Example:
-
-         .. code-block:: python
-
-            class Bar(ROSInterface):
-                 def __init__(self, prefix):
-                     super(Bar, self).__init__(prefix, properties={'topic': ROSTopic()})
 
     Attributes:
         _properties:

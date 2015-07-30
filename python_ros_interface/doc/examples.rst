@@ -1,5 +1,11 @@
+
+.. _examples:
+
 Examples
 --------
+
+ROS Interface
+*************
 
 ROS Service
 +++++++++++
@@ -116,3 +122,6 @@ ROS Interface
        print foo.param
        foo.param = 2
        print foo.params['foo'].clear_cache()
+
+Message Factory
+***************

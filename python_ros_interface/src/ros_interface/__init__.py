@@ -7,6 +7,7 @@ Provides simplified ROS Python interface
 from .ros import SubscribeManager
 from .ros import ROSTopic, ROSService, ROSAction, ROSParam, ROSInterface
 from .ros import ROSTopicProp, ROSServiceProp, ROSActionProp, ROSParamProp
+from .exceptions import *
 
 __all__ = (
     'SubscribeManager',
@@ -19,4 +20,5 @@ __all__ = (
     'ROSActionProp',
     'ROSParamProp',
     'ROSInterface'
+    'ROSInterfaceRuntimeError'
 )
