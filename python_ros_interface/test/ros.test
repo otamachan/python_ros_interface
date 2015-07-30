@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="python_ros_interface" type="mock.py" name="mock"/>
+  <test pkg="python_ros_interface" type="test_ros_interface.py" test-name="test_ros_interface"/>
+</launch>
