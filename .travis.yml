@@ -1,5 +1,6 @@
 before_install:
   - export ROS_DISTRO=hydro
+  - export REPO_PATH=$(pwd)
   - sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu precise main" > /etc/apt/sources.list.d/ros-latest.list'
   - wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
   - sudo apt-get update -qq
@@ -8,13 +9,12 @@ before_install:
   - rosdep update
 install:
   - mkdir -p ~/catkin_ws/src
-  - ln -s ~/ ~/catkin_ws/src/python_ros_interface
+  - ln -s $REPO_PATH ~/catkin_ws/src/python_ros_interface
   - cd ~/catkin_ws
-  - ls src/python_ros_interface -al
   - rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 before_script:
   - source /opt/ros/$ROS_DISTRO/setup.bash 
 script:
-  - catkin_make -j2
+  - catkin_make
   - catkin_make run_tests
   - catkin_make install
