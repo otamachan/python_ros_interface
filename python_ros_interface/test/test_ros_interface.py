@@ -71,7 +71,7 @@ class TestAction(unittest.TestCase):
     def action_done(self, status, result):
         self._done = True
 
-    def action_feedback(self, dat):
+    def action_feedback(self, data):
         self._count += 1
 
     def test_with_callback_success(self):
@@ -81,7 +81,6 @@ class TestAction(unittest.TestCase):
         fibonacci.send_goal(fibonacci.goal(5),
                             feedback_cb=self.action_feedback,
                             done_cb=self.action_done)
-        #fibonacci.wait_for_result()
         while not self._done:
             rospy.sleep(0.5)
         self.assertEqual(fibonacci.get_state(), fibonacci.SUCCEEDED)
@@ -89,6 +88,16 @@ class TestAction(unittest.TestCase):
         self.assertTrue(self._done)
         self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
 
+
+class TestTopic(unittest.TestCase):
+    def test_get(self):
+        fibonacci = ROSAction('/counter')
+    def test_get_once(self):
+        pass
+    def test_put(self):
+        pass
+    def test_put(self):
+        pass
 if __name__ == '__main__':
     import rostest
     rospy.init_node('test_ros_interface')

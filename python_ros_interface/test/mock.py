@@ -5,12 +5,13 @@ import rospy
 import actionlib
 from rospy_tutorials.srv import AddTwoInts, AddTwoIntsResponse
 from actionlib_tutorials.msg import FibonacciAction, FibonacciFeedback, FibonacciResult
-
+from std_msgs.msg import Int32
 class Mock(object):
     def __init__(self):
         self._service_server = rospy.Service('add_two_ints', AddTwoInts, self.add_two_ints)
         self._feedback = FibonacciFeedback()
-        self._result   = FibonacciResult()
+        self._result = FibonacciResult()
+        self._publisher = rospy.Publisher('counter', Int32, queue_size=1)
         self._actionlib_server = actionlib.SimpleActionServer('fibonacci', FibonacciAction, execute_cb=self.execute_cb, auto_start=False)
         self._actionlib_server.start()
 
