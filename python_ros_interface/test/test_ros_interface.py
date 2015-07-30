@@ -36,18 +36,37 @@ class TestAction(unittest.TestCase):
     def test_success(self):
         fibonacci = ROSAction('/fibonacci')
         self.assertEqual(fibonacci(5).sequence, (0, 1, 1, 2, 3, 5))
+        self.assertEqual(fibonacci.get_state(), fibonacci.SUCCEEDED)
+        self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
 
     def test_not_resolvable(self):
         fibonacci = ROSAction('/fibonacci_2')
         with self.assertRaises(ROSInterfaceRuntimeError):
             fibonacci(2)
-            self.assertEqual(fibonacci.get_state(), fibonacci.SUCCEEDED)
 
     def test_fail_timouet(self):
         fibonacci = ROSAction('/fibonacci')
         fibonacci(100, timeout=1.0)
         self.assertEqual(fibonacci.get_state(), fibonacci.PREEMPTED)
+        self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
 
+    def test_send_goal_success(self):
+        fibonacci = ROSAction('/fibonacci')
+        goal = fibonacci.goal(5)
+        fibonacci.send_goal(goal)
+        fibonacci.wait_for_result()
+        self.assertEqual(fibonacci.get_result().sequence, (0, 1, 1, 2, 3, 5))
+        self.assertEqual(fibonacci.get_state(), fibonacci.SUCCEEDED)
+        self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
+
+    def test_send_goal_fail_timeout(self):
+        fibonacci = ROSAction('/fibonacci')
+        goal = fibonacci.goal(100)
+        fibonacci.send_goal(goal)
+        fibonacci.wait_for_result(rospy.Duration(1.0))
+        self.assertEqual(fibonacci.get_state(), fibonacci.ACTIVE)
+        self.assertNotIn(fibonacci.get_state(), fibonacci.TERMINAL)
+        fibonacci.cancel_goal()
 
 if __name__ == '__main__':
     import rostest

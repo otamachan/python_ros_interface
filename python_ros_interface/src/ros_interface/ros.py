@@ -140,7 +140,7 @@ class ROSAction(object):
                7: 'RECALLING',
                8: 'RECALLED',
                9: 'LOST'}
-    TERMINAL_IDS = (3, 4, 5, 7, 8)
+    TERMINAL = (2, 3, 4, 5, 7, 8)
     def __init__(self, action_name, timeout=_TIMEOUT):
         self.name = action_name
         self._action_client = None
