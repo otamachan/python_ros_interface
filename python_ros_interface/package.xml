@@ -11,5 +11,6 @@
   <run_depend>actionlib</run_depend> 
   <run_depend>geometry_msgs</run_depend> 
   <run_depend>tf</run_depend>
+  <test_depend>rospy_tutorials</test_depend>
   <export/>
 </package>
