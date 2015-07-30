@@ -8,7 +8,7 @@ before_install:
   - rosdep update
 install:
   - mkdir -p ~/catkin_ws/src
-  - ln -s . ~/catkin_ws/src/python_ros_interface
+  - ln -s ~/ ~/catkin_ws/src/python_ros_interface
   - cd ~/catkin_ws
   - ls src/python_ros_interface -al
   - rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
