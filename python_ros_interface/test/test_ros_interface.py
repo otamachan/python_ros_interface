@@ -18,11 +18,15 @@ class TestService(unittest.TestCase):
     def test_not_resolvable(self):
         with self.assertRaises(ROSException):
             add_two_ints = ROSService('/add_two_ints_2')
+            start = rospy.Time.now()
             add_two_ints(3, 4)
+        self.assertGreater(rospy.Time.now() - start, rospy.Duration(1.0))
     def test_with_timeout(self):
         with self.assertRaises(ROSException):
-            add_two_ints = ROSService('/add_two_ints_2', timeout=1.0)
+            add_two_ints = ROSService('/add_two_ints_2', timeout=0.5)
+            start = rospy.Time.now()
             add_two_ints(3, 4)
+        self.assertLess(rospy.Time.now() - start, rospy.Duration(1.0))
 
 if __name__ == '__main__':
     import rostest
