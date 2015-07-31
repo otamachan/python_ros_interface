@@ -11,9 +11,11 @@ class Mock(object):
         self._service_server = rospy.Service('add_two_ints', AddTwoInts, self.add_two_ints)
         self._feedback = FibonacciFeedback()
         self._result = FibonacciResult()
-        self._publisher = rospy.Publisher('counter', Int32, queue_size=1)
-        self._actionlib_server = actionlib.SimpleActionServer('fibonacci', FibonacciAction, execute_cb=self.execute_cb, auto_start=False)
+        self._actionlib_server = actionlib.SimpleActionServer(
+            'fibonacci',
+            FibonacciAction, execute_cb=self.execute_cb, auto_start=False)
         self._actionlib_server.start()
+        #self._publisher = rospy.Publisher('counter', Int32, queue_size=1)
 
     def add_two_ints(self, req):
         return AddTwoIntsResponse(req.a + req.b)

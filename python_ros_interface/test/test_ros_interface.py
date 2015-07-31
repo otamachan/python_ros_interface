@@ -9,48 +9,47 @@ from rospy_tutorials.srv import AddTwoIntsRequest
 from rospy import ROSException
 from ros_interface import ROSService, ROSAction, ROSInterfaceRuntimeError
 
-class TestService(unittest.TestCase):
-    def test_success(self):
+class TestROSInterface(unittest.TestCase):
+    def test_rosservice_success(self):
         add_two_ints = ROSService('/add_two_ints')
         self.assertEqual(add_two_ints(1, 2).sum, 3)
 
-    def test_get_request(self):
+    def test_rosservice_get_request(self):
         add_two_ints = ROSService('/add_two_ints')
         self.assertIs(add_two_ints.request, AddTwoIntsRequest)
 
-    def test_fail_with_notresolvable(self):
+    def test_rosservice_fail_with_notresolvable(self):
         with self.assertRaises(ROSException):
             add_two_ints = ROSService('/add_two_ints_2')
             start = rospy.Time.now()
             add_two_ints(3, 4)
         self.assertGreater(rospy.Time.now() - start, rospy.Duration(1.0))
 
-    def test_fail_with_timeout(self):
+    def test_rosservice_fail_with_timeout(self):
         with self.assertRaises(ROSException):
             add_two_ints = ROSService('/add_two_ints_2', timeout=0.5)
             start = rospy.Time.now()
             add_two_ints(3, 4)
         self.assertLess(rospy.Time.now() - start, rospy.Duration(1.0))
 
-class TestAction(unittest.TestCase):
-    def test_success(self):
+    def test_rosaction_success(self):
         fibonacci = ROSAction('/fibonacci')
         self.assertEqual(fibonacci(5).sequence, (0, 1, 1, 2, 3, 5))
         self.assertEqual(fibonacci.get_state(), fibonacci.SUCCEEDED)
         self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
 
-    def test_not_resolvable(self):
+    def test_rosaction_not_resolvable(self):
         fibonacci = ROSAction('/fibonacci_2')
         with self.assertRaises(ROSInterfaceRuntimeError):
             fibonacci(2)
 
-    def test_fail_timouet(self):
+    def test_rosaction_fail_timouet(self):
         fibonacci = ROSAction('/fibonacci')
         fibonacci(100, timeout=1.0)
         self.assertEqual(fibonacci.get_state(), fibonacci.PREEMPTED)
         self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
 
-    def test_send_goal_success(self):
+    def test_rosaction_send_goal_success(self):
         fibonacci = ROSAction('/fibonacci')
         goal = fibonacci.goal(5)
         fibonacci.send_goal(goal)
@@ -59,7 +58,7 @@ class TestAction(unittest.TestCase):
         self.assertEqual(fibonacci.get_state(), fibonacci.SUCCEEDED)
         self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
 
-    def test_send_goal_fail_timeout(self):
+    def test_rosaction_send_goal_fail_timeout(self):
         fibonacci = ROSAction('/fibonacci')
         goal = fibonacci.goal(100)
         fibonacci.send_goal(goal)
@@ -74,7 +73,7 @@ class TestAction(unittest.TestCase):
     def action_feedback(self, data):
         self._count += 1
 
-    def test_with_callback_success(self):
+    def test_rosaction_with_callback_success(self):
         self._done = False
         self._count = 0
         fibonacci = ROSAction('/fibonacci')
@@ -88,19 +87,23 @@ class TestAction(unittest.TestCase):
         self.assertTrue(self._done)
         self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
 
-
-class TestTopic(unittest.TestCase):
-    def test_get(self):
-        fibonacci = ROSAction('/counter')
+    def test_rosparam_get(self):
+        pass
     def test_get_once(self):
         pass
     def test_put(self):
         pass
+
+class TestROSParam(unittest.TestCase):
+    def test_get(self):
+        pass
+    def test_get_once(self):
+        pass
     def test_put(self):
         pass
+
 if __name__ == '__main__':
     import rostest
     rospy.init_node('test_ros_interface')
     logging.getLogger('rosout').setLevel(logging.DEBUG)
-    rostest.rosrun('python_ros_interface', 'test_service', TestService)
-    rostest.rosrun('python_ros_interface', 'test_action', TestAction)
+    rostest.rosrun('python_ros_interface', 'testros_interface', TestROSInterface)
