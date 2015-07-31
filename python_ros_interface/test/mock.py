@@ -13,14 +13,16 @@ class Mock(object):
         self._result = FibonacciResult()
         self._actionlib_server = actionlib.SimpleActionServer(
             'fibonacci',
-            FibonacciAction, execute_cb=self.execute_cb, auto_start=False)
+            FibonacciAction, execute_cb=self.action_execute, auto_start=False)
         self._actionlib_server.start()
-        #self._publisher = rospy.Publisher('counter', Int32, queue_size=1)
+        self._publisher = rospy.Publisher('counter', Int32, queue_size=1)
+        self._timer = rospy.Timer(rospy.Duration(1.0), self.timer_callback)
+        self._counter = 0
 
     def add_two_ints(self, req):
         return AddTwoIntsResponse(req.a + req.b)
 
-    def execute_cb(self, goal):
+    def action_execute(self, goal):
         r = rospy.Rate(4)
         success = True
 
@@ -40,6 +42,9 @@ class Mock(object):
         if success:
             self._result.sequence = self._feedback.sequence
             self._actionlib_server.set_succeeded(self._result)
+    def timer_callback(self, event):
+        self._publisher.publish(self._counter)
+        self._counter += 1
 
 if __name__ == "__main__":
     rospy.init_node('mock')

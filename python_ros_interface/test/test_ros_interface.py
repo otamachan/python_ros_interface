@@ -7,9 +7,11 @@ import logging
 import rospy
 from rospy_tutorials.srv import AddTwoIntsRequest
 from rospy import ROSException
-from ros_interface import ROSService, ROSAction, ROSInterfaceRuntimeError
+from ros_interface import ROSService, ROSAction, ROSTopic, ROSParam
+from ros_interface import ROSInterfaceRuntimeError
 
 class TestROSInterface(unittest.TestCase):
+    # Test ROSService
     def test_rosservice_success(self):
         add_two_ints = ROSService('/add_two_ints')
         self.assertEqual(add_two_ints(1, 2).sum, 3)
@@ -32,6 +34,7 @@ class TestROSInterface(unittest.TestCase):
             add_two_ints(3, 4)
         self.assertLess(rospy.Time.now() - start, rospy.Duration(1.0))
 
+    # Test ROSAction
     def test_rosaction_success(self):
         fibonacci = ROSAction('/fibonacci')
         self.assertEqual(fibonacci(5).sequence, (0, 1, 1, 2, 3, 5))
@@ -87,11 +90,15 @@ class TestROSInterface(unittest.TestCase):
         self.assertTrue(self._done)
         self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
 
-    def test_rosparam_get(self):
+    # Test ROSTopic
+    def test_rostopic_get_once(self):
+        counter = ROSTopic('/counter')
+        first = counter.get()
+        second = counter.get()
+        self.assertEqual(first + 1, second)
+    def test_rostopc_get_once(self):
         pass
-    def test_get_once(self):
-        pass
-    def test_put(self):
+    def test_rostopic_put(self):
         pass
 
 class TestROSParam(unittest.TestCase):
