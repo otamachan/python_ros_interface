@@ -3,6 +3,7 @@
 u"""
 Utilities for ROS messages
 """
+import copy
 import numpy
 import rospy
 import genpy
@@ -55,7 +56,7 @@ def JointTrajectoryPoint(positions=None, duration=0.0):
             accelerations=zero,
             time_from_start=rospy.Duration(duration))
     else:
-        raise ValueError("positions is invalid: %s" % positions)
+        raise ValueError("positions is invalid: {0}".format(positions))
 
 def JointState(positions=None):
     u"""
@@ -74,7 +75,7 @@ def JointState(positions=None):
         return sensor_msgs.msg.JointState(name=positions.keys(),
                                           position=positions.values())
     else:
-        raise ValueError("positions is invalid: %s" % positions)
+        raise ValueError("positions is invalid: {0}".format(positions))
 
 def Twist(x=0.0, y=0.0, z=0.0, linear=None,
           ax=0.0, ay=0.0, az=0.0, angular=None):
@@ -232,11 +233,11 @@ def Pose(x=0.0, y=0.0, z=0.0, position=None,
         return geometry_msgs.msg.Pose(transform.translation,
                                       transform.rotation)
     elif transform:
-        raise ValueError("transform is not %s" % geometry_msgs.msg.Transform)
+        raise ValueError("transform is not {0}".format(geometry_msgs.msg.Transform))
     return geometry_msgs.msg.Pose(Point(x, y, z, position),
                                   Quaternion(ai, aj, ak, axes, orientation))
 
-def Quaternion(ai, aj, ak, axes='sxyz',
+def Quaternion(ai=0.0, aj=0.0, ak=0.0, axes='sxyz',
                quaternion=None):
     u"""
     Create :class:`geometry_msgs.msg.Quaternion`
@@ -260,14 +261,14 @@ def Quaternion(ai, aj, ak, axes='sxyz',
     """
     if quaternion is not None:
         if isinstance(quaternion, geometry_msgs.msg.Quaternion):
-            pass
+            quaternion = copy.deepcopy(quaternion)
         elif len(quaternion) == 4:
             quaternion = geometry_msgs.msg.Quaternion(quaternion[0],
                                                       quaternion[1],
                                                       quaternion[2],
                                                       quaternion[3])
         else:
-            raise ValueError("quaternion is invlaid: %s" % quaternion)
+            raise ValueError("quaternion is invalid: {0}".format(quaternion))
     else:
         array = tf.transformations.quaternion_from_euler(ai, aj, ak, axes=axes)
         quaternion = geometry_msgs.msg.Quaternion(*array)
@@ -293,13 +294,13 @@ def Vector3(x=0.0, y=0.0, z=0.0, vector3=None):
     """
     if vector3 is not None:
         if isinstance(vector3, geometry_msgs.msg.Vector3):
-            pass
+            vector3 = copy.deepcopy(vector3)
         elif len(vector3) == 3:
             vector3 = geometry_msgs.msg.Vector3(vector3[0],
                                                 vector3[1],
                                                 vector3[2])
         else:
-            raise ValueError("point is invlaid: %s" % vector3)
+            raise ValueError("vector3 is invalid: {0}".format(vector3))
     else:
         vector3 = geometry_msgs.msg.Vector3(x, y, z)
     return vector3
@@ -330,7 +331,7 @@ def Point(x=0.0, y=0.0, z=0.0, point=None):
                                             point[1],
                                             point[2])
         else:
-            raise ValueError("point is invlaid: %s" % point)
+            raise ValueError("point is invalid: {0}".format(point))
     else:
         point = geometry_msgs.msg.Point(x, y, z)
     return point
