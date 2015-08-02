@@ -242,13 +242,14 @@ class ROSTopic(object):
 
     """
     def __init__(self, topic_name,
-                 publisher_wait_subscribers=True,
+                 data_class = None,
+                 wait_for_subscribers=True,
                  publisher_timeout=_TIMEOUT,
                  **kwargs):
         self.name = topic_name
         self._publisher_timeout = publisher_timeout
-        self._publisher_wait_subscribers=publisher_wait_subscribers
-        self._topic_type = None
+        self._wait_for_subscribers=wait_for_subscribers
+        self._data_class = data_class
         self._subscriber = None
         self._publisher = None
         self._data = None
@@ -272,7 +273,7 @@ class ROSTopic(object):
             self.unsubscribe()
         self._updated = False
         self._subscriber = self._get_subscriber(**kwargs)
-        if wait_first:
+        if wait_first and 'callback' not in kwargs:
             self._wait_update(timeout=timeout)
     def unsubscribe(self):
         u"""
@@ -321,38 +322,37 @@ class ROSTopic(object):
             NotResolvableException:
         """
         if self._publisher is None:
-            rospy.logdebug("Start publishing. Wait for subscribers %s", self.name)
             self._publisher = self._get_publisher(**self._kwargs)
-            if self._publisher_wait_subscribers:
+            if self._wait_for_subscribers:
+                rospy.logdebug("Start publishing. Wait for subscribers %s", self.name)
                 try:
                     _wait_until(lambda: self._publisher.get_num_connections() > 0,
                                 timeout=self._publisher_timeout)
                 except TimeoutException:
                     rospy.logerr("No subscriber is subscribing for %s", self.name)
                     raise
+                rospy.logdebug("Connected %s", self.name)
         self._publisher.publish(*args, **kwargs)
     @property
-    def topic_type(self):
+    def data_class(self):
         u"""
-        Return the topic class
+        Return the topic data class
 
         Return:
-            Topic class
+            Topic data class
         """
-        if 'data_class' in self._kwargs:
-            return self._kwargs['data_class']
-        else:
+        if self._data_class is None:
             self._resolve()
-            return self._topic_type
+        return self._data_class
 
     def _resolve(self):
         u"""
         Resolve Topic type from topic name
         """
-        if self._topic_type is None:
+        if self._data_class is None:
             topic_type = rostopic.get_topic_type(self.name)[0]
             if topic_type:
-                self._topic_type = genpy.message.get_message_class(topic_type)
+                self._data_class = genpy.message.get_message_class(topic_type)
             else:
                 raise NotResolvableException("cannot find topic: %s" % self.name)
     def _get_subscriber(self, **kwargs):
@@ -362,19 +362,14 @@ class ROSTopic(object):
         self._resolve()
         if 'callback' not in kwargs:
             kwargs['callback'] = self._callback
-        return rospy.Subscriber(self.name, self._topic_type, **kwargs)
+        return rospy.Subscriber(self.name, self._data_class, **kwargs)
     def _get_publisher(self, **kwargs):
         u"""
         Create a publisher
         """
-        if 'data_class' in kwargs:
-            data_class = kwargs['data_class']
-        else:
-            self._resolve()
-            data_class = self._topic_type
         if 'queue_size' not in kwargs:
             kwargs['queue_size'] = 1
-        return rospy.Publisher(self.name, data_class, **kwargs)
+        return rospy.Publisher(self.name, self.data_class, **kwargs)
     def _callback(self, data):
         u"""
         Callback from Subscriber

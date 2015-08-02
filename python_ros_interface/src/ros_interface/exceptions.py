@@ -4,6 +4,8 @@ u"""
 Provides simplified ROS Python interface
 """
 
+class ROSInterfaceException(Exception):
+    pass
 class ROSInterfaceRuntimeError(RuntimeError):
     pass
 class TimeoutException(ROSInterfaceRuntimeError):
