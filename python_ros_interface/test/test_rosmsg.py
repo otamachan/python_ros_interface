@@ -71,3 +71,8 @@ class TestRosMsg(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             q = rosmsg.Quaternion(quaternion=(2, 3, 4))
+
+    def test_Pose(self):
+        p = rosmsg.Pose(x=1, y=2, z=3,
+                        ai=0.1, aj=0.2, ak=0.3, axes='rxyz')
+        self.assertEqual(p.position, rosmsg.Vector3(x=1, y=2, z=3))
