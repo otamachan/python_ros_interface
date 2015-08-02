@@ -75,4 +75,14 @@ class TestRosMsg(unittest.TestCase):
     def test_Pose(self):
         p = rosmsg.Pose(x=1, y=2, z=3,
                         ai=0.1, aj=0.2, ak=0.3, axes='rxyz')
-        self.assertEqual(p.position, rosmsg.Vector3(x=1, y=2, z=3))
+        q = tf.transformations.quaternion_from_euler(0.1, 0.2, 0.3, axes='rxyz')
+        self.assertEqual(p.position.x, 1)
+        self.assertEqual(p.position.y, 2)
+        self.assertEqual(p.position.z, 3)
+        self.assertEqual(p.orientation.x, q[0])
+        self.assertEqual(p.orientation.y, q[1])
+        self.assertEqual(p.orientation.z, q[2])
+        self.assertEqual(p.orientation.w, q[3])
+
+        p = rosmsg.Pose(x=1, y=2, z=3,
+                        ai=0.1, aj=0.2, ak=0.3, axes='rxyz')
