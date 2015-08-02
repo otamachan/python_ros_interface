@@ -255,6 +255,7 @@ class TestROSInterface(unittest.TestCase):
         param1.set(2, suffix='var')
         self.assertEqual(rospy.get_param('/param2/var'), 2)
 
+    # Test ROSInterface
     def test_ros_interface(self):
         mock = MockNode()
         self.assertEqual(mock.add_two_ints(1, 2).sum, 3)
