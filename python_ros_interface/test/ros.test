@@ -1,4 +1,9 @@
 <launch>
   <node pkg="python_ros_interface" type="mock.py" name="mock"/>
+  <param name="param" value="1"/>
+  <group ns="namespace">
+    <node pkg="python_ros_interface" type="mock.py" name="mock"/>
+    <param name="param" value="2"/>
+  </group>
   <test pkg="python_ros_interface" type="test_ros_interface.py" test-name="ros_interface"/>
 </launch>

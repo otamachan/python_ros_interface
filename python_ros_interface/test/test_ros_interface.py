@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# pylint: disable=no-member
 
 import unittest
 import rostest
@@ -9,7 +10,15 @@ import std_msgs
 from rospy_tutorials.srv import AddTwoIntsRequest
 from rospy import ROSException
 from ros_interface import ROSService, ROSAction, ROSTopic, ROSParam
+from ros_interface import ROSServiceProp, ROSActionProp, ROSTopicProp, ROSParamProp, ROSInterface
 from ros_interface import ROSInterfaceRuntimeError
+
+class MockNode(ROSInterface):
+    _properties = {'add_two_ints': ROSServiceProp(),
+                   'fibonacci': ROSActionProp(),
+                   'counter_pub': ROSTopicProp(),
+                   'counter_sub': ROSTopicProp(),
+                   'param': ROSParamProp()}
 
 class TestROSInterface(unittest.TestCase):
     # Test ROSService
@@ -210,7 +219,7 @@ class TestROSInterface(unittest.TestCase):
         param3.clear_cache()
         self.assertEqual(param3.get(), 0)
 
-    def test_set(self):
+    def test_set_success(self):
         rospy.set_param('/param1', 0)
         param1 = ROSParam('/param1')
         param1.set(1)
@@ -245,6 +254,28 @@ class TestROSInterface(unittest.TestCase):
         param1 = ROSParam('/param2')
         param1.set(2, suffix='var')
         self.assertEqual(rospy.get_param('/param2/var'), 2)
+
+    def test_ros_interface(self):
+        mock = MockNode()
+        self.assertEqual(mock.add_two_ints(1, 2).sum, 3)
+        self.assertEqual(mock.fibonacci(5).sequence, (0, 1, 1, 2, 3, 5))
+        first = mock.counter_pub.get()
+        second = mock.counter_pub.get()
+        self.assertEqual(first.data+1, second.data)
+        mock.counter_sub.put(1)
+        self.assertEqual(ROSTopic('/counter_echo').get().data, 2)
+        self.assertEqual(mock.param, 1)
+
+    def test_ros_interface_with_namespace(self):
+        mock = MockNode('/namespace')
+        self.assertEqual(mock.add_two_ints(2, 2).sum, 4)
+        self.assertEqual(mock.fibonacci(6).sequence, (0, 1, 1, 2, 3, 5, 8))
+        first = mock.counter_pub.get()
+        second = mock.counter_pub.get()
+        self.assertEqual(first.data+1, second.data)
+        mock.counter_sub.put(2)
+        self.assertEqual(ROSTopic('/namespace/counter_echo').get().data, 3)
+        self.assertEqual(mock.param, 2)
 
 if __name__ == '__main__':
     import rostest
