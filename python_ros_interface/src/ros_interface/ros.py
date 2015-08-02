@@ -154,7 +154,7 @@ class ROSAction(object):
         if self._action_client is None:
             action_goal_topic_type = rostopic.get_topic_type(self.name + '/goal')[0]
             if not action_goal_topic_type:
-                raise NotResolvableException("cannot find action %s" % self.name)
+                raise NotResolvableException("cannot find action {0}".format(self.name))
             # get the action class
             action_type = action_goal_topic_type[:-4]
             if action_type in self._action_class_cache:
@@ -166,7 +166,7 @@ class ROSAction(object):
             goal_type = action_type[:-6]+'Goal'
             self._goal_class = genpy.message.get_message_class(goal_type)
             if not self._goal_class:
-                raise NotResolvableException("cannot find action goal %s" % goal_type)
+                raise NotResolvableException("cannot find action goal {0}".format(goal_type))
             # wait
             self._action_client = actionlib.SimpleActionClient(self.name, self._action_class)
             self._action_client.wait_for_server(timeout=rospy.Duration(self._timeout))
@@ -354,7 +354,7 @@ class ROSTopic(object):
             if topic_type:
                 self._data_class = genpy.message.get_message_class(topic_type)
             else:
-                raise NotResolvableException("cannot find topic: %s" % self.name)
+                raise NotResolvableException("cannot find topic: {0}".format(self.name))
     def _get_subscriber(self, **kwargs):
         u"""
         Create a subscriber
