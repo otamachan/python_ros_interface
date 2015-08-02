@@ -145,6 +145,7 @@ class TestROSInterface(unittest.TestCase):
         counter = ROSTopic('/counter_sub')
         counter.put(3)
         self.assertEqual(ROSTopic('/counter_echo').get().data, 4)
+
     def test_rostopic_put_not_resolvable(self):
         with self.assertRaises(ROSInterfaceRuntimeError):
             counter = ROSTopic('/counter_sub_2')
@@ -166,13 +167,84 @@ class TestROSInterface(unittest.TestCase):
             counter.put(3)
         self.assertLess(rospy.Time.now() - start, rospy.Duration(1.0))
 
-class TestROSParam(unittest.TestCase):
-    def test_get(self):
-        pass
-    def test_get_once(self):
-        pass
-    def test_put(self):
-        pass
+    # Test ROSParam
+    def test_get_success(self):
+        rospy.set_param('/param1', 1)
+        param1 = ROSParam('/param1')
+        self.assertEqual(param1.get(), 1)
+
+        rospy.set_param('/param2/var', 2)
+        param2 = ROSParam('/param2')
+        self.assertEqual(param2.get(), {'var': 2})
+
+        var = ROSParam('/param2/var')
+        self.assertEqual(var.get(), 2)
+
+    def test_get_from_cache(self):
+        rospy.set_param('/param3', 3)
+        param3 = ROSParam('/param3')
+        self.assertEqual(param3.get(), 3)
+        rospy.set_param('/param3', 0)
+        self.assertEqual(param3.get(), 3)
+
+    def test_get_cache_off(self):
+        rospy.set_param('/param3', 3)
+        param3 = ROSParam('/param3', cache=False)
+        self.assertEqual(param3.get(), 3)
+        rospy.set_param('/param3', 0)
+        self.assertEqual(param3.get(), 0)
+
+    def test_get_with_default_value(self):
+        param4 = ROSParam('/param4')
+        self.assertEqual(param4.get(0), 0)
+
+    def test_get_with_suffix(self):
+        param2 = ROSParam('/param2')
+        self.assertEqual(param2.get(suffix='var'), 2)
+
+    def test_clear_cache(self):
+        rospy.set_param('/param3', 3)
+        param3 = ROSParam('/param3')
+        self.assertEqual(param3.get(), 3)
+        rospy.set_param('/param3', 0)
+        param3.clear_cache()
+        self.assertEqual(param3.get(), 0)
+
+    def test_set(self):
+        rospy.set_param('/param1', 0)
+        param1 = ROSParam('/param1')
+        param1.set(1)
+        self.assertEqual(rospy.get_param('/param1'), 1)
+
+        rospy.set_param('/param2/var', 0)
+        var = ROSParam('/param2')
+        var.set({'var': 3})
+        self.assertEqual(rospy.get_param('/param2/var'), 3)
+
+        rospy.set_param('/param2/var', 0)
+        var = ROSParam('/param2/var')
+        var.set(2)
+        self.assertEqual(rospy.get_param('/param2/var'), 2)
+
+    def test_set_cache(self):
+        rospy.set_param('/param1', 0)
+        param1 = ROSParam('/param1')
+        param1.set(1)
+        rospy.set_param('/param1', 2)
+        self.assertEqual(param1.get(), 1)
+
+    def test_set_no_cache(self):
+        rospy.set_param('/param1', 0)
+        param1 = ROSParam('/param1', cache=False)
+        param1.set(1)
+        rospy.set_param('/param1', 2)
+        self.assertEqual(param1.get(), 2)
+
+    def test_set_with_suffix(self):
+        rospy.set_param('/param2/var', 0)
+        param1 = ROSParam('/param2')
+        param1.set(2, suffix='var')
+        self.assertEqual(rospy.get_param('/param2/var'), 2)
 
 if __name__ == '__main__':
     import rostest

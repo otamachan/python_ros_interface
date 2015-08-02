@@ -417,16 +417,21 @@ class ROSParam(object):
             Parameter value
         """
         if suffix:
+            # do not cache
             name = self.name + '/' + suffix
+            if default_value is _UNSPECIFIED:
+                value = rospy.get_param(name)
+            else:
+                value = rospy.get_param(name, default_value)
         else:
-            name = self.name
-        if default_value is _UNSPECIFIED:
-            value = rospy.get_param(name)
-        else:
-            value = rospy.get_param(name, default_value)
-        # FIXME: deafault_value is cached
-        if not suffix and self._cache:
-            self._cached_value = value
+            if self._cached_value is not _UNSPECIFIED:
+                value = self._cached_value
+            elif default_value is _UNSPECIFIED:
+                value = rospy.get_param(self.name)
+                if self._cache:
+                    self._cached_value = value
+            else:
+                value = rospy.get_param(self.name, default_value)
         return value
     def set(self, value, suffix=''):
         u"""
@@ -439,10 +444,14 @@ class ROSParam(object):
             name = self.name + '/' + suffix
         else:
             name = self.name
-            if self._cache and self._cached_value is not _UNSPECIFIED:
+            if self._cache:
                 self._cached_value = value
         rospy.set_param(name, value)
-
+    def clear_cache(self):
+        u"""
+        Clear the cache
+        """
+        self._cached_value = _UNSPECIFIED
 class ROSWrapperFactory(object):
     u"""
     ROS wrapper factory
