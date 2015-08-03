@@ -13,6 +13,21 @@ import geometry_msgs.msg
 import sensor_msgs.msg
 import trajectory_msgs.msg
 
+def TransformStamped(transform, parent_id='', child_id='', stamp=None):
+    u"""
+    Return :class:`geometry_msgs.msg.TransformStapmped`
+
+    Args:
+        transform:
+        stamp:
+    Return:
+        Stamped object
+    Example:
+        .. code-block:: python
+
+            print rosmsg.Stamped(rosmsg.Pose(x=1), frame_id='aa')
+    """
+
 def Stamped(obj, frame_id='', stamp=None):
     u"""
     Return stamped ( with :class:`std_msgs.msg.Header` ) object
@@ -77,6 +92,14 @@ def JointState(positions=None):
     else:
         raise ValueError("positions is invalid: {0}".format(positions))
 
+def Accel(x=0.0, y=0.0, z=0.0, linear=None,
+          ax=0.0, ay=0.0, az=0.0, angular=None):
+    pass
+
+def Wrench(x=0.0, y=0.0, z=0.0, linear=None,
+           ax=0.0, ay=0.0, az=0.0, angular=None):
+    pass
+
 def Twist(x=0.0, y=0.0, z=0.0, linear=None,
           ax=0.0, ay=0.0, az=0.0, angular=None):
     u"""
@@ -111,7 +134,7 @@ def Twist(x=0.0, y=0.0, z=0.0, linear=None,
 
 def _vector3_array(vector3):
     u"""
-    Create :class:`numpy.arrray` from :class:``geometry_msgs.msg.Vector3``
+    Create :class:`numpy.arrrany` from :class:``geometry_msgs.msg.Vector3``
     """
     return numpy.array((vector3.x, vector3.y, vector3.z))
 
@@ -142,6 +165,18 @@ def _multiply_transforms(t1, t2):
 
     return Transform(translation=trans3,
                      rotation=rot3)
+
+def _inverse_transform(t):
+    u"""
+    Inverse :class:`geometry_msgs.msg.Transform`
+    """
+    inv_trans_mat = tf.transformations.translation_matrix(-1.0*_vector3_array(t.translation))
+    inv_rot = tf.transformations.quaternion_inverse(_quaternion_array(t.rotation))
+    inv_rot_mat = tf.transformations.quaternion_matrix(inv_rot)
+    mat = numpy.dot(inv_rot_mat, inv_trans_mat)
+    inv_trans = tf.transformations.translation_from_matrix(mat)
+    return Transform(translation=inv_trans,
+                     rotation=inv_rot)
 
 def Transform(x=0.0, y=0.0, z=0.0, translation=None,
               ai=0.0, aj=0.0, ak=0.0, axes='sxyz', rotation=None,
@@ -190,7 +225,7 @@ def Transform(x=0.0, y=0.0, z=0.0, translation=None,
     if world:
         return _multiply_transforms(world, local)
     elif inverse:
-        return _multiply_transforms(world, local)
+        return _inverse_transform(inverse)
     return geometry_msgs.msg.Transform(Vector3(x, y, z, translation),
                                        Quaternion(ai, aj, ak, axes, rotation))
 
