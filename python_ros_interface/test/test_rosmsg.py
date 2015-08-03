@@ -3,6 +3,7 @@
 # pylint: disable=no-member
 
 import unittest
+from mock import patch
 import rostest
 import logging
 import rospy
@@ -11,6 +12,42 @@ import tf.transformations
 from ros_interface import rosmsg
 
 class TestRosMsg(unittest.TestCase):
+    @patch('rospy.Time.now')
+    def test_TransformStamped(self, mock):
+        mock.return_value = rospy.Time(1)
+        t = rosmsg.Transform(x=1, y=2, z=3,
+                             ai=0.1, aj=0.2, ak=0.3, axes='rxyz')
+        q = tf.transformations.quaternion_from_euler(0.1, 0.2, 0.3, axes='rxyz')
+        ts = rosmsg.TransformStamped(t, parent_id='parent', child_id='child')
+        self.assertEqual(ts.transform.translation.x, 1)
+        self.assertEqual(ts.transform.translation.y, 2)
+        self.assertEqual(ts.transform.translation.z, 3)
+        self.assertEqual(ts.transform.rotation.x, q[0])
+        self.assertEqual(ts.transform.rotation.y, q[1])
+        self.assertEqual(ts.transform.rotation.z, q[2])
+        self.assertEqual(ts.transform.rotation.w, q[3])
+        self.assertEqual(ts.header.frame_id, 'parent')
+        self.assertEqual(ts.child_frame_id, 'child')
+        self.assertEqual(ts.header.stamp, rospy.Time(1))
+
+    @patch('rospy.Time.now')
+    def test_Stamped(self, mock):
+        mock.return_value = rospy.Time(1)
+        s = rosmsg.Stamped(rosmsg.Vector3(x=1, y=2, z=3), frame_id='x')
+        self.assertIsInstance(s, geometry_msgs.msg.Vector3Stamped)
+        self.assertEqual(s.vector.x, 1)
+        self.assertEqual(s.vector.y, 2)
+        self.assertEqual(s.vector.z, 3)
+        self.assertEqual(s.header.frame_id, 'x')
+        self.assertEqual(s.header.stamp, rospy.Time(1))
+
+    def test_JointTrajectoryPoint(self):
+        jtp = rosmsg.JointTrajectoryPoint([0.1, 0.2], 1.0)
+        self.assertEqual(jtp.positions, [0.1, 0.2])
+        self.assertEqual(jtp.velocities, [0.0, 0.0])
+        self.assertEqual(jtp.accelerations, [0.0, 0.0])
+        self.assertEqual(jtp.time_from_start, rospy.Duration(1.0))
+
     def test_Vector3(self):
         v = rosmsg.Vector3(x=1, y=2, z=3)
         self.assertEqual(v.x, 1)

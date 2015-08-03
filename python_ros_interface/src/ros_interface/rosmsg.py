@@ -19,14 +19,21 @@ def TransformStamped(transform, parent_id='', child_id='', stamp=None):
 
     Args:
         transform:
+        parent_id:
+        child_id:
         stamp:
     Return:
         Stamped object
     Example:
         .. code-block:: python
 
-            print rosmsg.Stamped(rosmsg.Pose(x=1), frame_id='aa')
+            print rosmsg.TransformStamped(rosmsg.Transform(x=1), perent_id='aa', child_id='bb')
     """
+    if stamp is None:
+        stamp = rospy.Time.now()
+    return geometry_msgs.msg.TransformStamped(std_msgs.msg.Header(frame_id=parent_id, stamp=stamp),
+                                              child_id,
+                                              transform)
 
 def Stamped(obj, frame_id='', stamp=None):
     u"""
@@ -61,7 +68,9 @@ def JointTrajectoryPoint(positions=None, duration=0.0):
     Example:
         .. code-block:: python
 
-            print rosmsg.JointTrajectoryPoint({'larm_elbow': 11.0})
+            print rosmsg.JointTrajectoryPoint([0.5, 0.2])
+
+            print rosmsg.JointTrajectoryPoint([0.5, 0.2], 0.3)
     """
     if isinstance(positions, list):
         zero = [0.0] * len(positions)
