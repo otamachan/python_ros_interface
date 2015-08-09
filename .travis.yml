@@ -22,5 +22,7 @@ script:
   - catkin_test_results build/test_results
   - catkin_make install
 after_success:
-  - pushd build/python_ros_interface/python_ros_interface; cp $REPO_PATH/.coveragerc .; coveralls; popd
+  - cd $REPO_PATH
+  - cp ~/catkin_ws/build/python_ros_interface/python_ros_interface/.coverage .
+  - coveralls
 
