@@ -4,8 +4,7 @@
 
 import unittest
 from mock import patch
-import rostest
-import logging
+
 import rospy
 import geometry_msgs
 import tf.transformations

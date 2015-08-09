@@ -3,13 +3,13 @@
 # pylint: disable=no-member
 
 import unittest
-import rostest
-import logging
 import rospy
 import std_msgs
+import subprocess
 from rospy_tutorials.srv import AddTwoIntsRequest
 from rospy import ROSException
-from ros_interface import *
+from ros_interface import ROSInterface, ROSServiceProp, ROSActionProp, ROSTopicProp, ROSParamProp
+from ros_interface import ROSService, ROSAction, ROSTopic, ROSParam
 
 class MockNode(ROSInterface):
     _properties = {'add_two_ints': ROSServiceProp(),
@@ -19,10 +19,20 @@ class MockNode(ROSInterface):
                    'param': ROSParamProp()}
 
 class TestROSInterface(unittest.TestCase):
+    #
+    @classmethod
+    def setUpClass(cls):
+        cls.proc = subprocess.Popen(['roslaunch', 'ros.test'])
+        rospy.init_node('test_ros_interface')
+    @classmethod
+    def tearDownClass(cls):
+        cls.proc.terminate()
+        cls.proc.wait()
     # Test ROSService
     def test_rosservice_success(self):
         add_two_ints = ROSService('/add_two_ints')
         self.assertEqual(add_two_ints(1, 2).sum, 3)
+
 
     def test_rosservice_get_request(self):
         add_two_ints = ROSService('/add_two_ints')
@@ -277,24 +287,6 @@ class TestROSInterface(unittest.TestCase):
         self.assertEqual(ROSTopic('/namespace/counter_echo').get().data, 3)
         self.assertEqual(mock.param, 2)
 
-if __name__ == '__main__':
-    import rostest
-    import coverage, sys
-    import os
-    rospy.init_node('test_ros_interface')
-    logging.getLogger('rosout').setLevel(logging.DEBUG)
-    cov = coverage.coverage()
-    cov.start()
-    p = 'ros_interface.ros'
-    if p in sys.modules:
-        reload(sys.modules[p])
-    else:
-        __import__(p)
-    try:
-        rostest.rosrun('ros_interface', 'testros_interface', TestROSInterface)
-    except:
-        pass
-    cov.stop()
-    cov.save()
-    rospy.logerr(os.getcwd())
-    cov.html_report(directory='piyo')
+#if __name__ == '__main__':
+    #rospy.init_node('test_ros_interface')
+    #rostest.rosrun('ros_interface', 'testros_interface', TestROSInterface)
