@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member
 
+import os
 import unittest
 import rospy
 import std_msgs
@@ -9,7 +10,7 @@ import subprocess
 from rospy_tutorials.srv import AddTwoIntsRequest
 from rospy import ROSException
 from ros_interface import ROSInterface, ROSServiceProp, ROSActionProp, ROSTopicProp, ROSParamProp
-from ros_interface import ROSService, ROSAction, ROSTopic, ROSParam
+from ros_interface import ROSService, ROSAction, ROSTopic, ROSParam, ROSInterfaceRuntimeError
 
 class MockNode(ROSInterface):
     _properties = {'add_two_ints': ROSServiceProp(),
@@ -22,7 +23,7 @@ class TestROSInterface(unittest.TestCase):
     #
     @classmethod
     def setUpClass(cls):
-        cls.proc = subprocess.Popen(['roslaunch', 'ros.test'])
+        cls.proc = subprocess.Popen(['roslaunch', os.path.join(os.path.dirname(__file__), 'ros.test')])
         rospy.init_node('test_ros_interface')
     @classmethod
     def tearDownClass(cls):
