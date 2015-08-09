@@ -1,7 +1,7 @@
 python_ros_interface
 ====================
 
-http://otamachanpython-ros-interface.readthedocs.org/en/latest/references/
+http://otamachanpython-ros-interface.readthedocs.org/en/latest/
 
 .. image:: https://travis-ci.org/otamachan/python_ros_interface.svg
     :target: https://travis-ci.org/otamachan/python_ros_interface

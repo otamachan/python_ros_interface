@@ -466,7 +466,7 @@ class ROSWrapperFactory(object):
         self._name = name
         self._kwargs = kwargs
     def create(self, name, prefix):
-        u"""生成する"""
+        u"""Generate"""
         if self._name:
             name = prefix + '/' + self._name
         else:
