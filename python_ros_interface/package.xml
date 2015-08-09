@@ -14,6 +14,7 @@
   <run_depend>tf</run_depend>
   <test_depend>python-nose</test_depend>
   <test_depend>python-mock</test_depend>
+  <test_depend>python-coverage</test_depend>
   <test_depend>rospy_tutorials</test_depend>
   <test_depend>actionlib_tutorials</test_depend>
   <export/>

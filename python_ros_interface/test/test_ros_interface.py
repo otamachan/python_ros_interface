@@ -9,9 +9,7 @@ import rospy
 import std_msgs
 from rospy_tutorials.srv import AddTwoIntsRequest
 from rospy import ROSException
-from ros_interface import ROSService, ROSAction, ROSTopic, ROSParam
-from ros_interface import ROSServiceProp, ROSActionProp, ROSTopicProp, ROSParamProp, ROSInterface
-from ros_interface import ROSInterfaceRuntimeError
+from ros_interface import *
 
 class MockNode(ROSInterface):
     _properties = {'add_two_ints': ROSServiceProp(),
@@ -267,6 +265,7 @@ class TestROSInterface(unittest.TestCase):
         self.assertEqual(ROSTopic('/counter_echo').get().data, 2)
         self.assertEqual(mock.param, 1)
 
+#class TestROSInterfaceWIP(unittest.TestCase):
     def test_ros_interface_with_namespace(self):
         mock = MockNode('/namespace')
         self.assertEqual(mock.add_two_ints(2, 2).sum, 4)
@@ -280,6 +279,22 @@ class TestROSInterface(unittest.TestCase):
 
 if __name__ == '__main__':
     import rostest
+    import coverage, sys
+    import os
     rospy.init_node('test_ros_interface')
     logging.getLogger('rosout').setLevel(logging.DEBUG)
-    rostest.rosrun('python_ros_interface', 'testros_interface', TestROSInterface)
+    cov = coverage.coverage()
+    cov.start()
+    p = 'ros_interface.ros'
+    if p in sys.modules:
+        reload(sys.modules[p])
+    else:
+        __import__(p)
+    try:
+        rostest.rosrun('ros_interface', 'testros_interface', TestROSInterface)
+    except:
+        pass
+    cov.stop()
+    cov.save()
+    rospy.logerr(os.getcwd())
+    cov.html_report(directory='piyo')

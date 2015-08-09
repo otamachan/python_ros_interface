@@ -103,11 +103,35 @@ def JointState(positions=None):
 
 def Accel(x=0.0, y=0.0, z=0.0, linear=None,
           ax=0.0, ay=0.0, az=0.0, angular=None):
-    pass
+    u"""
+    Create :class:`geometry_msgs.msg.Accel`
 
-def Wrench(x=0.0, y=0.0, z=0.0, linear=None,
-           ax=0.0, ay=0.0, az=0.0, angular=None):
-    pass
+    Args:
+        x: (default: 0.0)
+        y: (default: 0.0)
+        z: (default: 0.0)
+        linear: (default: None)
+        ax: (default: 0.0)
+        ay: (default: 0.0)
+        az: (default: 0.0)
+        angular: (default: None)
+    Return:
+        :class:`geometry_msgs.msg.Accel`
+    Example:
+        .. code-block:: python
+
+            print rosmsg.Accel(x=1)
+
+            print rosmsg.Accel(linear=(3, 1, 2))
+            print rosmsg.Accel(linear=Vector3(1, 1, 1))
+
+            print rosmsg.Accel(az=1)
+
+            print rosmsg.Accel(angular=(3, 1, 2))
+            print rosmsg.Accel(angular=Vector3(0.1, 0.2, 0.3))
+    """
+    return geometry_msgs.msg.Accel(Vector3(x, y, z, linear),
+                                   Vector3(ax, ay, az, angular))
 
 def Twist(x=0.0, y=0.0, z=0.0, linear=None,
           ax=0.0, ay=0.0, az=0.0, angular=None):
@@ -140,6 +164,38 @@ def Twist(x=0.0, y=0.0, z=0.0, linear=None,
     """
     return geometry_msgs.msg.Twist(Vector3(x, y, z, linear),
                                    Vector3(ax, ay, az, angular))
+
+def Wrench(x=0.0, y=0.0, z=0.0, force=None,
+           tx=0.0, ty=0.0, tz=0.0, torque=None):
+    u"""
+    Create :class:`geometry_msgs.msg.Wrench`
+
+    Args:
+        x: (default: 0.0)
+        y: (default: 0.0)
+        z: (default: 0.0)
+        linear: (default: None)
+        ax: (default: 0.0)
+        ay: (default: 0.0)
+        az: (default: 0.0)
+        angular: (default: None)
+    Return:
+        :class:`geometry_msgs.msg.Wrench`
+    Example:
+        .. code-block:: python
+
+            print rosmsg.Wrench(x=1)
+
+            print rosmsg.Wrench(force=(3, 1, 2))
+            print rosmsg.Wrench(force=Vector3(1, 1, 1))
+
+            print rosmsg.Wrench(tz=1)
+
+            print rosmsg.Wrench(torque=(3, 1, 2))
+            print rosmsg.Wrench(torque=Vector3(0.1, 0.2, 0.3))
+    """
+    return geometry_msgs.msg.Wrench(Vector3(x, y, z, force),
+                                    Vector3(tx, ty, tz, torque))
 
 def _vector3_array(vector3):
     u"""
