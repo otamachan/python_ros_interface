@@ -21,8 +21,9 @@ script:
   - catkin_make run_tests
   - catkin_test_results build/test_results
   - catkin_make install
-after_success:
+  - source install/setup.bash
   - cd $REPO_PATH
-  - cp ~/catkin_ws/build/python_ros_interface/python_ros_interface/.coverage .
+  - nosetests python_ros_interface/ --with-coverage --cover-package=ros_interface
+after_success:
   - coveralls
 
