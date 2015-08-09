@@ -23,12 +23,14 @@ class TestROSInterface(unittest.TestCase):
     #
     @classmethod
     def setUpClass(cls):
-        cls.proc = subprocess.Popen(['roslaunch', os.path.join(os.path.dirname(__file__), 'ros.test')])
+        test_path = os.path.dirname(__file__)
+        cls.proc = subprocess.Popen(['roslaunch', 'ros.test'], cwd=test_path)
         rospy.init_node('test_ros_interface')
     @classmethod
     def tearDownClass(cls):
         cls.proc.terminate()
         cls.proc.wait()
+
     # Test ROSService
     def test_rosservice_success(self):
         add_two_ints = ROSService('/add_two_ints')
