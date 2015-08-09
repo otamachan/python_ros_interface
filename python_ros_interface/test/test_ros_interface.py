@@ -128,6 +128,12 @@ class TestROSInterface(unittest.TestCase):
         second = counter.get(timeout=None)
         self.assertEqual(first.data + 1, second.data)
 
+    def test_rostopic_get_with_callback(self):
+        counter = ROSTopic('/counter_pub')
+        first = counter.get()
+        second = counter.get(callback=1) # callback should be ignored
+        self.assertEqual(first.data + 1, second.data)
+
     def test_rostopic_get_not_resolvable(self):
         counter = ROSTopic('/counter_pub_2')
         with self.assertRaises(ROSInterfaceRuntimeError):
@@ -139,6 +145,14 @@ class TestROSInterface(unittest.TestCase):
         first = counter.get()
         second = counter.get()
         self.assertEqual(first.data, second.data)
+        # subscribe again
+        counter.subscribe()
+
+    def test_rostopc_unsubscribe(self):
+        counter = ROSTopic('/counter_pub')
+        counter.subscribe()
+        first = counter.get()
+        counter.unsubscribe()
 
     def test_rostopic_subscribe_get_wait_update(self):
         counter = ROSTopic('/counter_pub')
