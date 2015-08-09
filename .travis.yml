@@ -21,7 +21,7 @@ script:
   - catkin_make run_tests
   - catkin_test_results build/test_results
   - catkin_make install
-  - source install/setup.bash
+  - source devel/setup.bash
   - cd $REPO_PATH
   - nosetests python_ros_interface/ --with-coverage --cover-package=ros_interface
 after_success:
