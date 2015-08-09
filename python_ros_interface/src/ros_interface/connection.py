@@ -3,7 +3,7 @@
 # pylint: disable=no-member
 
 import rospy
-from .tf import TfWrapper
+from .tf_wrapper import TfWrapper
 from .exceptions import *
 
 _TIMEOUT = 5.0
