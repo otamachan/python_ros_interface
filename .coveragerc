@@ -2,3 +2,4 @@
 omit =
      /opt/*
      /usr/*
+     */test/*
