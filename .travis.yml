@@ -24,7 +24,7 @@ script:
   # test
   - source devel/setup.bash
   - cd $REPO_PATH
-  - nosetests python_ros_interface/ --with-coverage --cover-package=ros_interface
+  - nosetests python_ros_interface/ --with-coverage --cover-package=ros_interface -s
 after_success:
   - coveralls
 
