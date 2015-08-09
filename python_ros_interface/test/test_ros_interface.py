@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member
 
+import roslaunch
 import os
 import unittest
 import rospy
@@ -12,6 +13,7 @@ from rospy import ROSException
 from ros_interface import ROSInterface, ROSServiceProp, ROSActionProp, ROSTopicProp, ROSParamProp
 from ros_interface import ROSService, ROSAction, ROSTopic, ROSParam
 from ros_interface import ROSInterfaceRuntimeError, TimeoutException
+import utils
 
 class MockNode(ROSInterface):
     _properties = {'add_two_ints': ROSServiceProp(),
@@ -26,13 +28,11 @@ class TestROSInterface(unittest.TestCase):
     def setUpClass(cls):
         print '+'*100
         test_path = os.path.dirname(__file__)
-        cls.proc = subprocess.Popen(['roslaunch', 'ros_interface.test'], cwd=test_path)
-        rospy.init_node('test_ros_interface')
+        cls.proc = utils.launch(os.path.join(test_path, 'ros_interface.test'))
 
     @classmethod
     def tearDownClass(cls):
-        cls.proc.terminate()
-        cls.proc.wait()
+        utils.wait_shutdown(cls.proc)
         print '-'*100
 
     # Test ROSService
