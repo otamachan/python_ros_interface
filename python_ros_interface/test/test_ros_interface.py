@@ -10,7 +10,8 @@ import subprocess
 from rospy_tutorials.srv import AddTwoIntsRequest
 from rospy import ROSException
 from ros_interface import ROSInterface, ROSServiceProp, ROSActionProp, ROSTopicProp, ROSParamProp
-from ros_interface import ROSService, ROSAction, ROSTopic, ROSParam, ROSInterfaceRuntimeError
+from ros_interface import ROSService, ROSAction, ROSTopic, ROSParam
+from ros_interface import ROSInterfaceRuntimeError, TimeoutException
 
 class MockNode(ROSInterface):
     _properties = {'add_two_ints': ROSServiceProp(),
@@ -24,7 +25,7 @@ class TestROSInterface(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         test_path = os.path.dirname(__file__)
-        cls.proc = subprocess.Popen(['roslaunch', 'ros.test'], cwd=test_path)
+        cls.proc = subprocess.Popen(['roslaunch', 'ros_interface.test'], cwd=test_path)
         rospy.init_node('test_ros_interface')
 
     @classmethod
@@ -74,6 +75,12 @@ class TestROSInterface(unittest.TestCase):
         self.assertLess(rospy.Time.now() - start, rospy.Duration(1.5))
         self.assertEqual(fibonacci.get_state(), fibonacci.PREEMPTED)
         self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
+
+    def test_rosaction_getattr(self):
+        fibonacci = ROSAction('/fibonacci')
+        getattr(fibonacci, 'send_goal')
+        with self.assertRaises(AttributeError):
+            getattr(fibonacci, 'dummy')
 
     def test_rosaction_send_goal_success(self):
         fibonacci = ROSAction('/fibonacci')
@@ -127,6 +134,11 @@ class TestROSInterface(unittest.TestCase):
         first = counter.get()
         second = counter.get(timeout=None)
         self.assertEqual(first.data + 1, second.data)
+
+    def test_rostopic_get_timeout(self):
+        counter = ROSTopic('/counter_pub2')
+        with self.assertRaises(TimeoutException):
+            first = counter.get()
 
     def test_rostopic_get_with_callback(self):
         counter = ROSTopic('/counter_pub')
@@ -242,6 +254,10 @@ class TestROSInterface(unittest.TestCase):
         param2 = ROSParam('/param2')
         self.assertEqual(param2.get(suffix='var'), 2)
 
+    def test_get_with_suffix_and_default_value(self):
+        param2 = ROSParam('/param2')
+        self.assertEqual(param2.get(suffix='var2', default_value=20), 20)
+
     def test_clear_cache(self):
         rospy.set_param('/param3', 3)
         param3 = ROSParam('/param3')
@@ -296,7 +312,10 @@ class TestROSInterface(unittest.TestCase):
         self.assertEqual(first.data+1, second.data)
         mock.counter_sub.put(1)
         self.assertEqual(ROSTopic('/counter_echo').get().data, 2)
+        rospy.set_param('/param', 1)
         self.assertEqual(mock.param, 1)
+        mock.param = 11
+        self.assertEqual(rospy.get_param('/param'), 11)
 
     def test_ros_interface_with_namespace(self):
         mock = MockNode('/namespace')
@@ -307,4 +326,7 @@ class TestROSInterface(unittest.TestCase):
         self.assertEqual(first.data+1, second.data)
         mock.counter_sub.put(2)
         self.assertEqual(ROSTopic('/namespace/counter_echo').get().data, 3)
+        rospy.set_param('/namespace/param', 2)
         self.assertEqual(mock.param, 2)
+        mock.param = 12
+        self.assertEqual(rospy.get_param('/namespace/param'), 3)

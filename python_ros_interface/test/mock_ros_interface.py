@@ -17,6 +17,7 @@ class Mock(object):
             FibonacciAction, execute_cb=self.action_execute, auto_start=False)
         self._actionlib_server.start()
         self._publisher = rospy.Publisher('counter_pub', Int32, queue_size=1)
+        self._publisher2 = rospy.Publisher('counter_pub2', Int32, queue_size=1)
         self._subscriber = rospy.Subscriber('counter_sub', Int32, callback=self.counter_callback)
         self._publisher_echo = rospy.Publisher('counter_echo', Int32, queue_size=1, latch=True)
         self._timer = rospy.Timer(rospy.Duration(1.0), self.timer_callback)

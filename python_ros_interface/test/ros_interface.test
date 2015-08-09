@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="python_ros_interface" type="mock_ros_interface.py" name="mock"/>
+  <param name="param" value="1"/>
+  <group ns="namespace">
+    <node pkg="python_ros_interface" type="mock_ros_interface.py" name="mock"/>
+    <param name="param" value="2"/>
+  </group>
+</launch>
