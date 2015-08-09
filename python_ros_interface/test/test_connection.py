@@ -15,7 +15,7 @@ class TestSubscribeManager(unittest.TestCase):
         print '+'*100
         test_path = os.path.dirname(__file__)
         cls.proc = subprocess.Popen(['roslaunch', 'ros_interface.test'], cwd=test_path)
-        rospy.init_node('test_ros_interface')
+        rospy.init_node('test_connection')
 
     @classmethod
     def tearDownClass(cls):
