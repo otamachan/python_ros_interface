@@ -26,6 +26,7 @@ class TestROSInterface(unittest.TestCase):
         test_path = os.path.dirname(__file__)
         cls.proc = subprocess.Popen(['roslaunch', 'ros.test'], cwd=test_path)
         rospy.init_node('test_ros_interface')
+
     @classmethod
     def tearDownClass(cls):
         cls.proc.terminate()
@@ -36,6 +37,9 @@ class TestROSInterface(unittest.TestCase):
         add_two_ints = ROSService('/add_two_ints')
         self.assertEqual(add_two_ints(1, 2).sum, 3)
 
+    def test_rosservice_timeout_is_None(self):
+        add_two_ints = ROSService('/add_two_ints', timeout=None)
+        self.assertEqual(add_two_ints(1, 2).sum, 3)
 
     def test_rosservice_get_request(self):
         add_two_ints = ROSService('/add_two_ints')
@@ -278,7 +282,6 @@ class TestROSInterface(unittest.TestCase):
         self.assertEqual(ROSTopic('/counter_echo').get().data, 2)
         self.assertEqual(mock.param, 1)
 
-#class TestROSInterfaceWIP(unittest.TestCase):
     def test_ros_interface_with_namespace(self):
         mock = MockNode('/namespace')
         self.assertEqual(mock.add_two_ints(2, 2).sum, 4)
@@ -289,7 +292,3 @@ class TestROSInterface(unittest.TestCase):
         mock.counter_sub.put(2)
         self.assertEqual(ROSTopic('/namespace/counter_echo').get().data, 3)
         self.assertEqual(mock.param, 2)
-
-#if __name__ == '__main__':
-    #rospy.init_node('test_ros_interface')
-    #rostest.rosrun('ros_interface', 'testros_interface', TestROSInterface)

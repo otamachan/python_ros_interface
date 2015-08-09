@@ -6,6 +6,7 @@ import actionlib
 from rospy_tutorials.srv import AddTwoInts, AddTwoIntsResponse
 from actionlib_tutorials.msg import FibonacciAction, FibonacciFeedback, FibonacciResult
 from std_msgs.msg import Int32
+
 class Mock(object):
     def __init__(self):
         self._service_server = rospy.Service('add_two_ints', AddTwoInts, self.add_two_ints)
