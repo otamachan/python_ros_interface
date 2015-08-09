@@ -7,7 +7,7 @@ import tf2_ros
 from tf2_msgs.msg import TFMessage
 from geometry_msgs.msg import TransformStamped
 
-class Tf2Wrapper(object):
+class TfWrapper(object):
     u"""
     tf2_ros wrapper class
 

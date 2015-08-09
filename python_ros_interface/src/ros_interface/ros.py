@@ -8,7 +8,6 @@ import rosservice
 import rostopic
 import actionlib
 from rospy import ROSException
-from .tf2 import Tf2Wrapper
 from .exceptions import *
 
 _TIMEOUT = 5.0
@@ -566,67 +565,3 @@ class ROSInterface(object):
             self.params[attr].set(value)
         else:
             super(ROSInterface, self).__setattr__(attr, value)
-
-class ROSConnection(object):
-    u"""
-    Singletone class to manage connection with ROS Network
-    """
-    __instance = None
-    def __new__(cls, **kwargs):
-        if ROSConnection.__instance is None:
-            ROSConnection.__instance = object.__new__(cls, **kwargs)
-        return ROSConnection.__instance
-    def __init__(self):
-        if not rospy.core.is_initialized():
-            name = self.__class__.__name__
-            rospy.init_node(name.replace('.', '_'), anonymous=True)
-        #while not rospy.Time.now():
-        #    time.sleep(0.1) #TODO: timeout
-        self.tf2 = Tf2Wrapper()
-
-class SubscribeManager(object):
-    u"""
-    Manager class for subscribers
-
-    Args:
-        subscribe_tf:
-
-    Attributes:
-        tf2:
-    """
-    def __init__(self, subscribe_tf=True):
-        self._connection = ROSConnection()
-        self._subscribers = []
-        self.tf2 = self._connection.tf2
-        self._subscribe_tf = subscribe_tf
-
-    def add_subscriber(self, topic_wrapper, wait_first=True, timeout=5.0, **kwargs):
-        u"""
-        Register a subscriber in :attr:`_subscribers`
-
-        Args:
-            topic_wrapper:
-            wait_first:
-            timeout:
-            **kwargs:
-        """
-        kwargs['wait_first'] = wait_first
-        kwargs['timeout'] = timeout
-        self._subscribers.append((topic_wrapper, kwargs))
-
-    def subscribe(self):
-        u"""
-        Start subscription
-        """
-        if self._subscribe_tf:
-            self.tf2.subscribe()
-        for topic_wrapper, kwargs in self._subscribers:
-            topic_wrapper.subscribe(**kwargs)
-
-    def unsubscribe(self):
-        u"""
-        Stop subscription
-        """
-        # Not stop the tf2 because other clients may still use it
-        for topic_wrapper, _ in self._subscribers:
-            topic_wrapper.unsubscribe()
