@@ -329,4 +329,4 @@ class TestROSInterface(unittest.TestCase):
         rospy.set_param('/namespace/param', 2)
         self.assertEqual(mock.param, 2)
         mock.param = 12
-        self.assertEqual(rospy.get_param('/namespace/param'), 3)
+        self.assertEqual(rospy.get_param('/namespace/param'), 12)
