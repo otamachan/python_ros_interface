@@ -37,10 +37,6 @@ class TestROSInterface(unittest.TestCase):
         add_two_ints = ROSService('/add_two_ints')
         self.assertEqual(add_two_ints(1, 2).sum, 3)
 
-    def test_rosservice_timeout_is_None(self):
-        add_two_ints = ROSService('/add_two_ints', timeout=None)
-        self.assertEqual(add_two_ints(1, 2).sum, 3)
-
     def test_rosservice_get_request(self):
         add_two_ints = ROSService('/add_two_ints')
         self.assertIs(add_two_ints.request, AddTwoIntsRequest)
@@ -124,6 +120,12 @@ class TestROSInterface(unittest.TestCase):
         counter = ROSTopic('/counter_pub')
         first = counter.get()
         second = counter.get()
+        self.assertEqual(first.data + 1, second.data)
+
+    def test_rostopic_get_success_no_timeout(self):
+        counter = ROSTopic('/counter_pub')
+        first = counter.get()
+        second = counter.get(timeout=None)
         self.assertEqual(first.data + 1, second.data)
 
     def test_rostopic_get_not_resolvable(self):
