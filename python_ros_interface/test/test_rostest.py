@@ -4,7 +4,6 @@
 import os
 import unittest
 import mock
-import rospy
 from ros_interface.rostest import _Master, _wait_nodes
 
 class TestROSTest(unittest.TestCase):
@@ -20,7 +19,9 @@ class TestROSTest(unittest.TestCase):
         launch_file = os.path.join(os.path.dirname(__file__), 'ros_interface.test')
         master.launch(launch_file)
         with self.assertRaises(RuntimeError):
-            _wait_nodes('/dummy', timeout=0.0)
+            with mock.patch('ronode.get_node_names') as get_node_names:
+                get_node_names.return_value = []
+                _wait_nodes('/dummy', timeout=0.5)
         with self.assertRaises(RuntimeError):
             with mock.patch('rospy.is_shutdown') as is_shutdown:
                 is_shutdown.return_value = True
