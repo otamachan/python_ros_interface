@@ -17,7 +17,7 @@ from ros_interface import rostest_launch
 
 class MockNode(ROSInterface):
     _properties = {'add_two_ints': ROSServiceProp(),
-                   'fibonacci': ROSActionProp(),
+                   'fibonacci': ROSActionProp('fibonacci'),
                    'counter_pub': ROSTopicProp(),
                    'counter_sub': ROSTopicProp(),
                    'param': ROSParamProp()}
