@@ -8,6 +8,7 @@ from .ros import ROSTopic, ROSService, ROSAction, ROSParam, ROSInterface
 from .ros import ROSTopicProp, ROSServiceProp, ROSActionProp, ROSParamProp
 from .connection import SubscribeManager
 from .exceptions import ROSInterfaceRuntimeError, TimeoutException, NotResolvableException
+from .rostest import rostest_launch
 
 __all__ = (
     'SubscribeManager',
@@ -21,6 +22,7 @@ __all__ = (
     'ROSParamProp',
     'ROSInterface',
     'ROSInterfaceRuntimeError',
+    'rostest_launch',
     'TimeoutException',
     'NotResolvableException'
 )

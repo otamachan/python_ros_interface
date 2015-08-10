@@ -4,23 +4,15 @@
 
 import os
 import unittest
-import rospy
-import subprocess
 from ros_interface import SubscribeManager
-import utils
+from ros_interface import rostest_launch
 
 class TestSubscribeManager(unittest.TestCase):
     #
     @classmethod
     def setUpClass(cls):
-        print '+'*100
-        test_path = os.path.dirname(__file__)
-        cls.proc = utils.launch(os.path.join(test_path, 'ros_interface.test'))
-
-    @classmethod
-    def tearDownClass(cls):
-        utils.wait_shutdown(cls.proc)
-        print '-'*100
+        rostest_launch(os.path.join(
+            os.path.dirname(__file__), 'ros_interface.test'))
 
     def test_singleton(self):
         sub1 = SubscribeManager()
