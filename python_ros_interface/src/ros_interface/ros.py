@@ -11,11 +11,11 @@ from rospy import ROSException
 from .exceptions import *
 
 _TIMEOUT = 5.0
-_POLLING = 20
+_POLLING = 10
 
 def _wait_until(condition, timeout=None, polling=_POLLING):
     u"""
-    Wait until condition returns true
+    Wait until condition function returns true
     """
     if timeout is None:
         timeout_time = None
@@ -24,11 +24,31 @@ def _wait_until(condition, timeout=None, polling=_POLLING):
     rate = rospy.Rate(polling)
     while not condition():
         if rospy.is_shutdown():
-            break
-        if timeout_time and rospy.get_rostime() > timeout_time:
+            break #TODO: anything to do?
+        elif timeout_time and rospy.get_rostime() > timeout_time:
             raise TimeoutException()
         rate.sleep()
     return condition()
+
+def _resolve_topic_type(topic_name, timeout=None, polling=_POLLING):
+    u"""
+    Get the topic type from topic name
+    """
+    if timeout is None:
+        timeout_time = None
+    else:
+        timeout_time = rospy.get_rostime() + rospy.Duration(timeout)
+    rate = rospy.Rate(polling)
+    while True:
+        topic_type = rostopic.get_topic_type(topic_name)[0]
+        if topic_type:
+            break
+        elif rospy.is_shutdown():
+            raise NotResolvableException("cannot resolve topic {0}".format(topic_name))
+        elif timeout_time and rospy.get_rostime() > timeout_time:
+            raise TimeoutException("cannot find topic {0}".format(topic_name))
+        rate.sleep()
+    return topic_type
 
 class ROSService(object):
     u"""
@@ -151,9 +171,8 @@ class ROSAction(object):
         Create ``SimpleActionClient`` if it is the first time
         """
         if self._action_client is None:
-            action_goal_topic_type = rostopic.get_topic_type(self.name + '/goal')[0]
-            if not action_goal_topic_type:
-                raise NotResolvableException("cannot find action {0}".format(self.name))
+            action_goal_topic_type = _resolve_topic_type(self.name + '/goal',
+                                                         timeout=self._timeout)
             # get the action class
             action_type = action_goal_topic_type[:-4]
             if action_type in self._action_class_cache:
@@ -163,10 +182,10 @@ class ROSAction(object):
                 self._action_class_cache[action_type] = self._action_class
             # get the goal class
             goal_type = action_type[:-6]+'Goal'
-            self._goal_class = genpy.message.get_message_class(goal_type)
-            if not self._goal_class:
-                raise NotResolvableException("cannot find action goal {0}".format(goal_type))
-            # wait
+            try:
+                self._goal_class = genpy.message.get_message_class(goal_type)
+            except ValueError:
+                raise NotResolvableException("failed to resolve class from type {0}".format(goal_type))
             self._action_client = actionlib.SimpleActionClient(self.name, self._action_class)
             self._action_client.wait_for_server(timeout=rospy.Duration(self._timeout))
     def __call__(self, *args, **kwargs):
@@ -233,7 +252,7 @@ class ROSTopic(object):
     Args:
         topic_name:
         publisher_wait_subscribers:
-        publisher_timeout:
+        timeout:
         **kwargs:
 
     Attributes:
@@ -243,10 +262,10 @@ class ROSTopic(object):
     def __init__(self, topic_name,
                  data_class = None,
                  wait_for_subscribers=True,
-                 publisher_timeout=_TIMEOUT,
+                 timeout=_TIMEOUT,
                  **kwargs):
         self.name = topic_name
-        self._publisher_timeout = publisher_timeout
+        self._timeout = timeout
         self._wait_for_subscribers=wait_for_subscribers
         self._data_class = data_class
         self._subscriber = None
@@ -254,13 +273,12 @@ class ROSTopic(object):
         self._data = None
         self._kwargs = kwargs
         self._updated = False # This flag is not threadsafe
-    def subscribe(self, wait_first=True, timeout=_TIMEOUT, **kwargs):
+    def subscribe(self, wait_first=True, **kwargs):
         u"""
         Start subscription
 
         Args:
             wait_first:
-            timeout:
             **kwargs:
         Raises:
             TimeoutException
@@ -273,7 +291,7 @@ class ROSTopic(object):
         self._updated = False
         self._subscriber = self._get_subscriber(**kwargs)
         if wait_first and 'callback' not in kwargs:
-            self._wait_update(timeout=timeout)
+            self._wait_update(timeout=self._timeout)
     def unsubscribe(self):
         u"""
         Stop subscription
@@ -281,13 +299,12 @@ class ROSTopic(object):
         if self._subscriber is not None:
             self._subscriber.unregister()
             self._subscriber = None
-    def get(self, wait_update=False, timeout=_TIMEOUT, **kwargs):
+    def get(self, wait_update=False, **kwargs):
         u"""
         Return the last value
 
         Args:
             wait_update:
-            timeout:
             **kwargs:
         Return:
             The last value
@@ -301,13 +318,13 @@ class ROSTopic(object):
             if 'callback' in kwargs:
                 del kwargs['callback']
             sub = self._get_subscriber(**kwargs)
-            self._wait_update(timeout=timeout)
+            self._wait_update(timeout=self._timeout)
             sub.unregister()
         else:
             # wait_update or not updated yet
             if wait_update or not self._updated:
                 self._updated = False
-                self._wait_update(timeout=timeout)
+                self._wait_update(timeout=self._timeout)
         return self._data
     def put(self, *args, **kwargs):
         u"""
@@ -326,7 +343,7 @@ class ROSTopic(object):
                 rospy.logdebug("Start publishing. Wait for subscribers %s", self.name)
                 try:
                     _wait_until(lambda: self._publisher.get_num_connections() > 0,
-                                timeout=self._publisher_timeout)
+                                timeout=self._timeout)
                 except TimeoutException:
                     rospy.logerr("No subscriber is subscribing for %s", self.name)
                     raise
@@ -349,11 +366,12 @@ class ROSTopic(object):
         Resolve Topic type from topic name
         """
         if self._data_class is None:
-            topic_type = rostopic.get_topic_type(self.name)[0]
-            if topic_type:
+            topic_type = _resolve_topic_type(self.name,
+                                             timeout=self._timeout)
+            try:
                 self._data_class = genpy.message.get_message_class(topic_type)
-            else:
-                raise NotResolvableException("cannot find topic: {0}".format(self.name))
+            except ValueError:
+                raise NotResolvableException("failed to resolve class from type {0}".format(topic_type))
     def _get_subscriber(self, **kwargs):
         u"""
         Create a subscriber

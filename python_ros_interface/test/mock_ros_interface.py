@@ -15,6 +15,7 @@ class Mock(object):
         self._actionlib_server = actionlib.SimpleActionServer(
             'fibonacci',
             FibonacciAction, execute_cb=self.action_execute, auto_start=False)
+        self._subscriber = rospy.Subscriber('fibonacci_dummy/goal', Int32)
         self._actionlib_server.start()
         self._publisher = rospy.Publisher('counter_pub', Int32, queue_size=1)
         self._publisher2 = rospy.Publisher('counter_pub2', Int32, queue_size=1)

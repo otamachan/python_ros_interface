@@ -18,10 +18,14 @@ class TfWrapper(object):
         timeout:
     """
     def __init__(self, timeout=1.0):
-        self._tf2_buffer = tf2_ros.Buffer()
+        self._tf2_buffer = None
         self._tf2_listener = None
         self.timeout = timeout
-        self._tf_publisher = rospy.Publisher("/tf", TFMessage, queue_size=1)
+        self._tf_publisher = None
+    def init(self):
+        if self._tf2_buffer is None:
+            self._tf2_buffer = tf2_ros.Buffer()
+            self._tf_publisher = rospy.Publisher("/tf", TFMessage, queue_size=1)
     def subscribe(self):
         u"""
         Start subscription from tf

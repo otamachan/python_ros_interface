@@ -2,17 +2,16 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=no-member
 
-import roslaunch
 import os
 import unittest
+import mock
 import rospy
 import std_msgs
-import subprocess
 from rospy_tutorials.srv import AddTwoIntsRequest
 from rospy import ROSException
 from ros_interface import ROSInterface, ROSServiceProp, ROSActionProp, ROSTopicProp, ROSParamProp
 from ros_interface import ROSService, ROSAction, ROSTopic, ROSParam
-from ros_interface import ROSInterfaceRuntimeError, TimeoutException
+from ros_interface import ROSInterfaceRuntimeError, TimeoutException, NotResolvableException
 from ros_interface import rostest_launch
 
 class MockNode(ROSInterface):
@@ -78,6 +77,11 @@ class TestROSInterface(unittest.TestCase):
         with self.assertRaises(AttributeError):
             getattr(fibonacci, 'dummy')
 
+    def test_rosaction_goal_not_resolvable(self):
+        fibonacci = ROSAction('/fibonacci_dummy')
+        with self.assertRaises(NotResolvableException):
+            goal = fibonacci.goal(5)
+
     def test_rosaction_send_goal_success(self):
         fibonacci = ROSAction('/fibonacci')
         goal = fibonacci.goal(5)
@@ -126,10 +130,16 @@ class TestROSInterface(unittest.TestCase):
         self.assertEqual(first.data + 1, second.data)
 
     def test_rostopic_get_success_no_timeout(self):
-        counter = ROSTopic('/counter_pub')
+        counter = ROSTopic('/counter_pub', timeout=None)
         first = counter.get()
-        second = counter.get(timeout=None)
+        second = counter.get()
         self.assertEqual(first.data + 1, second.data)
+
+    def test_rostopic_get_fail_by_shutdown(self):
+        counter = ROSTopic('/counter_pub')
+        with mock.patch('rospy.is_shutdown') as mck:
+            mck.return_value = True
+            counter.get() # nothing happens
 
     def test_rostopic_get_timeout(self):
         counter = ROSTopic('/counter_pub2')
@@ -209,7 +219,7 @@ class TestROSInterface(unittest.TestCase):
         counter.put(3)
 
     def test_rostopic_put_timeout(self):
-        counter = ROSTopic('/counter_sub_2', publisher_timeout=0.5, data_class=std_msgs.msg.Int32)
+        counter = ROSTopic('/counter_sub_2', timeout=0.5, data_class=std_msgs.msg.Int32)
         with self.assertRaises(ROSInterfaceRuntimeError):
             start = rospy.Time.now()
             counter.put(3)
