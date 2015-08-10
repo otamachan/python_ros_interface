@@ -14,6 +14,10 @@ from ros_interface import ROSService, ROSAction, ROSTopic, ROSParam
 from ros_interface import ROSInterfaceRuntimeError, TimeoutException, NotResolvableException
 from ros_interface import rostest_launch
 
+def setUpModule():
+    rostest_launch(os.path.join(
+        os.path.dirname(__file__), 'ros_interface.test'))
+
 class MockNode(ROSInterface):
     _properties = {'add_two_ints': ROSServiceProp(),
                    'fibonacci': ROSActionProp('fibonacci'),
@@ -21,49 +25,77 @@ class MockNode(ROSInterface):
                    'counter_sub': ROSTopicProp(),
                    'param': ROSParamProp()}
 
-class TestROSInterface(unittest.TestCase):
-    #
-    @classmethod
-    def setUpClass(cls):
-        rostest_launch(os.path.join(
-            os.path.dirname(__file__), 'ros_interface.test'))
-
-    # Test ROSService
-    def test_rosservice_success(self):
+class TestROSService(unittest.TestCase):
+    def test_call(self):
         add_two_ints = ROSService('/add_two_ints')
         self.assertEqual(add_two_ints(1, 2).sum, 3)
 
-    def test_rosservice_get_request(self):
+    def test_get_request_class(self):
         add_two_ints = ROSService('/add_two_ints')
         self.assertIs(add_two_ints.request, AddTwoIntsRequest)
 
-    def test_rosservice_not_resolvable(self):
+    def test_wait_and_find(self):
+        add_two_ints = ROSService('/add_two_ints_delayed', timeout=5.0)
+        # service will start in 1 second
+        ROSTopic('/mock_control').put('service')
+        self.assertEqual(add_two_ints(1, 2).sum, 3)
+
+    def test_not_resolvable(self):
         with self.assertRaises(ROSException):
             add_two_ints = ROSService('/add_two_ints_2')
             start = rospy.Time.now()
             add_two_ints(3, 4)
+        # default timeout is 5.0
         self.assertGreater(rospy.Time.now() - start, rospy.Duration(1.0))
 
-    def test_rosservice_timeout(self):
+    def test_timeout(self):
         with self.assertRaises(ROSException):
             add_two_ints = ROSService('/add_two_ints_2', timeout=0.5)
             start = rospy.Time.now()
             add_two_ints(3, 4)
+        # return within timeout
         self.assertLess(rospy.Time.now() - start, rospy.Duration(1.0))
 
-    # Test ROSAction
-    def test_rosaction_success(self):
+    def test_raise_exception(self):
+        with self.assertRaises(rospy.ServiceException):
+            add_two_ints = ROSService('/add_two_ints')
+            with mock.patch('rospy.ServiceProxy.call') as call:
+                call.side_effect = rospy.ServiceException()
+                add_two_ints(3, 4)
+
+class TestROSAction(unittest.TestCase):
+    def test_call(self):
         fibonacci = ROSAction('/fibonacci')
         self.assertEqual(fibonacci(5).sequence, (0, 1, 1, 2, 3, 5))
         self.assertEqual(fibonacci.get_state(), fibonacci.SUCCEEDED)
         self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
 
-    def test_rosaction_not_resolvable(self):
+    def test_call_no_timeout(self):
+        fibonacci = ROSAction('/fibonacci', timeout=None)
+        self.assertEqual(fibonacci(5).sequence, (0, 1, 1, 2, 3, 5))
+        self.assertEqual(fibonacci.get_state(), fibonacci.SUCCEEDED)
+        self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
+
+    def test_wait_and_find(self):
+        fibonacci = ROSAction('/fibonacci_delayed')
+        ROSTopic('/mock_control').put('action')
+        self.assertEqual(fibonacci(5).sequence, (0, 1, 1, 2, 3, 5))
+        self.assertEqual(fibonacci.get_state(), fibonacci.SUCCEEDED)
+        self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
+
+    def test_wait_and_shutdown(self):
+        fibonacci = ROSAction('/fibonacci_shutdown')
+        with self.assertRaises(ROSInterfaceRuntimeError):
+            with mock.patch('rospy.is_shutdown') as is_shutdown:
+                is_shutdown.return_value = True
+                fibonacci(5)
+
+    def test_not_resolvable(self):
         fibonacci = ROSAction('/fibonacci_2')
         with self.assertRaises(ROSInterfaceRuntimeError):
             fibonacci(2)
 
-    def test_rosaction_timouet(self):
+    def test_timouet(self):
         fibonacci = ROSAction('/fibonacci')
         start = rospy.Time.now()
         fibonacci(100, timeout=1.0)
@@ -71,18 +103,18 @@ class TestROSInterface(unittest.TestCase):
         self.assertEqual(fibonacci.get_state(), fibonacci.PREEMPTED)
         self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
 
-    def test_rosaction_getattr(self):
+    def test_getattr(self):
         fibonacci = ROSAction('/fibonacci')
         getattr(fibonacci, 'send_goal')
         with self.assertRaises(AttributeError):
             getattr(fibonacci, 'dummy')
 
-    def test_rosaction_goal_not_resolvable(self):
+    def test_goal_not_resolvable(self):
         fibonacci = ROSAction('/fibonacci_dummy')
         with self.assertRaises(NotResolvableException):
             goal = fibonacci.goal(5)
 
-    def test_rosaction_send_goal_success(self):
+    def test_send_goal(self):
         fibonacci = ROSAction('/fibonacci')
         goal = fibonacci.goal(5)
         fibonacci.send_goal(goal)
@@ -91,7 +123,7 @@ class TestROSInterface(unittest.TestCase):
         self.assertEqual(fibonacci.get_state(), fibonacci.SUCCEEDED)
         self.assertIn(fibonacci.get_state(), fibonacci.TERMINAL)
 
-    def test_rosaction_send_goal_timeout(self):
+    def test_send_goal_timeout(self):
         fibonacci = ROSAction('/fibonacci')
         goal = fibonacci.goal(100)
         fibonacci.send_goal(goal)
@@ -102,7 +134,7 @@ class TestROSInterface(unittest.TestCase):
         self.assertNotIn(fibonacci.get_state(), fibonacci.TERMINAL)
         fibonacci.cancel_goal()
 
-    def test_rosaction_with_callback_success(self):
+    def test_with_callback(self):
         self._done = False
         self._count = 0
         fibonacci = ROSAction('/fibonacci')
@@ -122,42 +154,57 @@ class TestROSInterface(unittest.TestCase):
     def action_feedback(self, data):
         self._count += 1
 
-    # Test ROSTopic
-    def test_rostopic_get_success(self):
+class TestROSTopic(unittest.TestCase):
+    def test_get(self):
         counter = ROSTopic('/counter_pub')
         first = counter.get()
         second = counter.get()
         self.assertEqual(first.data + 1, second.data)
 
-    def test_rostopic_get_success_no_timeout(self):
+    def test_get_no_timeout(self):
         counter = ROSTopic('/counter_pub', timeout=None)
         first = counter.get()
         second = counter.get()
         self.assertEqual(first.data + 1, second.data)
 
-    def test_rostopic_get_fail_by_shutdown(self):
+    def test_get_wait_and_find(self):
+        counter = ROSTopic('/counter_pub_delayed', timeout=None)
+        ROSTopic('/mock_control').put('publish')
+        first = counter.get()
+        second = counter.get()
+        self.assertEqual(first.data + 1, second.data)
+
+    def test_wait_and_shutdown(self):
         counter = ROSTopic('/counter_pub')
-        with mock.patch('rospy.is_shutdown') as mck:
-            mck.return_value = True
-            counter.get() # nothing happens
+        with self.assertRaises(ROSInterfaceRuntimeError):
+            with mock.patch('rospy.is_shutdown') as mck:
+                mck.return_value = True
+                counter.get()
 
-    def test_rostopic_get_timeout(self):
-        counter = ROSTopic('/counter_pub2')
+    def test_get_not_resolvable(self):
+        counter = ROSTopic('/counter_pub_2')
         with self.assertRaises(TimeoutException):
-            first = counter.get()
+            counter.get()
 
-    def test_rostopic_get_with_callback(self):
+    def test_get_timeout_not_udpate(self):
+        counter = ROSTopic('/counter_pub2') # resolvable but nothing published
+        with self.assertRaises(TimeoutException):
+            counter.get()
+
+    def test_get_not_resolvable_class(self):
+        counter = ROSTopic('/counter_pub')
+        with self.assertRaises(NotResolvableException):
+            with mock.patch('genpy.message.get_message_class') as get_message_class:
+                get_message_class.side_effect = ValueError()
+                counter.get()
+
+    def test_get_with_callback(self):
         counter = ROSTopic('/counter_pub')
         first = counter.get()
         second = counter.get(callback=1) # callback should be ignored
         self.assertEqual(first.data + 1, second.data)
 
-    def test_rostopic_get_not_resolvable(self):
-        counter = ROSTopic('/counter_pub_2')
-        with self.assertRaises(ROSInterfaceRuntimeError):
-            counter.get()
-
-    def test_rostopc_subscribe_success(self):
+    def test_subscribe(self):
         counter = ROSTopic('/counter_pub')
         counter.subscribe()
         first = counter.get()
@@ -166,25 +213,32 @@ class TestROSInterface(unittest.TestCase):
         # subscribe again
         counter.subscribe()
 
-    def test_rostopc_unsubscribe(self):
+    def test_subscribe_with_data_class(self):
+        counter = ROSTopic('/counter_pub_2', data_class=std_msgs.msg.Int32)
+        counter.subscribe(wait_first=False)
+
+    def test_unsubscribe(self):
         counter = ROSTopic('/counter_pub')
         counter.subscribe()
         first = counter.get()
         counter.unsubscribe()
+        first = counter.get()
+        second = counter.get()
+        self.assertEqual(first.data + 1, second.data)
 
-    def test_rostopic_subscribe_get_wait_update(self):
+    def test_subscribe_get_wait_update(self):
         counter = ROSTopic('/counter_pub')
         counter.subscribe()
         first = counter.get()
         second = counter.get(wait_update=True)
         self.assertEqual(first.data + 1, second.data)
 
-    def test_rostopic_subscribe_not_resolvable(self):
+    def test_subscribe_not_resolvable(self):
         counter = ROSTopic('/counter_pub_2')
         with self.assertRaises(ROSInterfaceRuntimeError):
             counter.subscribe()
 
-    def test_rostopic_subscribe_with_callback(self):
+    def test_subscribe_with_callback(self):
         self._counter_data = None
         counter = ROSTopic('/counter_pub')
         counter.subscribe(callback=self.sub_callback)
@@ -199,33 +253,45 @@ class TestROSInterface(unittest.TestCase):
     def sub_callback(self, data):
         self._counter_data = data
 
-    def test_rostopic_put_success(self):
+    def test_put(self):
         counter = ROSTopic('/counter_sub')
         counter.put(3)
         self.assertEqual(ROSTopic('/counter_echo').get().data, 4)
 
-    def test_rostopic_put_not_resolvable(self):
+    def test_put_wait_and_find(self):
+        counter = ROSTopic('/counter_sub_delayed')
+        ROSTopic('/mock_control').put('subscribe')
+        counter.put(10)
+        self.assertEqual(ROSTopic('/counter_echo').get().data, 11)
+
+    def test_put_not_resolvable(self):
         with self.assertRaises(ROSInterfaceRuntimeError):
             counter = ROSTopic('/counter_sub_2')
             counter.put(3)
 
-    def test_rostopic_put_not_wait_for_subscribers(self):
+    def test_put_not_wait_for_subscribers(self):
+        ROSTopic('/counter_sub').put(2)
+        counter = ROSTopic('/counter_sub_2', wait_for_subscribers=False, data_class=std_msgs.msg.Int32)
+        counter.put(3)
+        self.assertEqual(counter._publisher.get_num_connections(), 0)
+
+    def test_put_not_wait_for_subscribers_with_latch(self):
         counter = ROSTopic('/counter_sub', wait_for_subscribers=False, latch=True)
         counter.put(3)
         self.assertEqual(ROSTopic('/counter_echo').get().data, 4)
 
-    def test_rostopic_put_with_data_class(self):
+    def test_put_with_data_class(self):
         counter = ROSTopic('/counter_sub_2', wait_for_subscribers=False, data_class=std_msgs.msg.Int32)
-        counter.put(3)
+        counter.put(3) # nothing happens
 
-    def test_rostopic_put_timeout(self):
+    def test_put_timeout(self):
         counter = ROSTopic('/counter_sub_2', timeout=0.5, data_class=std_msgs.msg.Int32)
-        with self.assertRaises(ROSInterfaceRuntimeError):
+        with self.assertRaises(TimeoutException):
             start = rospy.Time.now()
             counter.put(3)
         self.assertLess(rospy.Time.now() - start, rospy.Duration(1.0))
 
-    # Test ROSParam
+class TestROSParam(unittest.TestCase):
     def test_get_success(self):
         rospy.set_param('/param1', 1)
         param1 = ROSParam('/param1')

@@ -24,7 +24,7 @@ def _wait_until(condition, timeout=None, polling=_POLLING):
     rate = rospy.Rate(polling)
     while not condition():
         if rospy.is_shutdown():
-            break #TODO: anything to do?
+            raise ROSInterfaceRuntimeError('rospy is shutdown')
         elif timeout_time and rospy.get_rostime() > timeout_time:
             raise TimeoutException()
         rate.sleep()
@@ -44,7 +44,7 @@ def _resolve_topic_type(topic_name, timeout=None, polling=_POLLING):
         if topic_type:
             break
         elif rospy.is_shutdown():
-            raise NotResolvableException("cannot resolve topic {0}".format(topic_name))
+            raise ROSInterfaceRuntimeError('rospy is shutdown')
         elif timeout_time and rospy.get_rostime() > timeout_time:
             raise TimeoutException("cannot find topic {0}".format(topic_name))
         rate.sleep()
@@ -187,7 +187,11 @@ class ROSAction(object):
             except ValueError:
                 raise NotResolvableException("failed to resolve class from type {0}".format(goal_type))
             self._action_client = actionlib.SimpleActionClient(self.name, self._action_class)
-            self._action_client.wait_for_server(timeout=rospy.Duration(self._timeout))
+            if self._timeout:
+                timeout = rospy.Duration(self._timeout)
+            else:
+                timeout = rospy.Duration()
+            self._action_client.wait_for_server(timeout=timeout)
     def __call__(self, *args, **kwargs):
         u"""
         Call the action
@@ -376,10 +380,9 @@ class ROSTopic(object):
         u"""
         Create a subscriber
         """
-        self._resolve()
         if 'callback' not in kwargs:
             kwargs['callback'] = self._callback
-        return rospy.Subscriber(self.name, self._data_class, **kwargs)
+        return rospy.Subscriber(self.name, self.data_class, **kwargs)
     def _get_publisher(self, **kwargs):
         u"""
         Create a publisher

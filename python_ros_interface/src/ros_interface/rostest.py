@@ -28,20 +28,22 @@ class _Master(object):
     def __init__(self):
         self._roscore = None
         self._roslaunch = None
-    def init(self):
+    def init(self, init_node=True):
         if self._roscore is None:
             # randomiaze port for parallel test
             port = random.randrange(10000, 50000)
             os.environ['ROS_MASTER_URI'] = 'http://localhost:%d' % port
             self._roscore = subprocess.Popen(['roscore', '-p', str(port)])
-            rospy.init_node('test', anonymous=True)
-            _wait_nodes('/rosout')
-    def launch(self, launch_file):
-        self.init()
+            if not rospy.core.is_initialized() and init_node:
+                rospy.init_node('test', anonymous=True)
+                _wait_nodes('/rosout')
+    def launch(self, launch_file, init_node=True):
+        self.init(init_node=init_node)
         self.shutdown()
-        params = rospy.get_param_names()
-        for param in params:
-            rospy.delete_param(param)
+        if init_node:
+            params = rospy.get_param_names()
+            for param in params:
+                rospy.delete_param(param)
         self._roslaunch = subprocess.Popen(['roslaunch', launch_file])
 
     def shutdown(self):
