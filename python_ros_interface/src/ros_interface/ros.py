@@ -318,6 +318,7 @@ class ROSTopic(object):
         """
         if self._subscriber is None:
             # subscribe once
+            self._data = None
             self._updated = False
             if 'callback' in kwargs:
                 del kwargs['callback']
