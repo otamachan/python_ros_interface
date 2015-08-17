@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# pylint: disable=no-member
 
 import rospy
 import tf2_ros
 from tf2_msgs.msg import TFMessage
 from geometry_msgs.msg import TransformStamped
 
-class TfWrapper(object):
+class Tf2Wrapper(object):
     u"""
     tf2_ros wrapper class
 
@@ -18,24 +17,29 @@ class TfWrapper(object):
         timeout:
     """
     def __init__(self, timeout=1.0):
-        self._tf2_buffer = None
+        self._tf2_buffer = tf2_ros.Buffer(debug=False)
         self._tf2_listener = None
         self.timeout = timeout
         self._tf_publisher = None
+
     def init(self):
         if self._tf2_buffer is None:
-            self._tf2_buffer = tf2_ros.Buffer()
             self._tf_publisher = rospy.Publisher("/tf", TFMessage, queue_size=1)
+
     def subscribe(self):
         u"""
         Start subscription from tf
         """
-        self._tf2_listener = tf2_ros.TransformListener(self._tf2_buffer)
+        if self._tf2_listener is None:
+            self._tf2_listener = tf2_ros.TransformListener(self._tf2_buffer)
+
     def unsubscribe(self):
         u"""
         Stop subscription from tf
         """
+        #self._tf2_listener.listenerthread.stop()
         self._tf2_listener = None
+
     def send_one_transform(self, parent, child, transform, stamp=None):
         u"""
         Publish a single transform to tf
@@ -70,6 +74,8 @@ class TfWrapper(object):
             time = rospy.Time(0)
         if timeout is None:
             timeout = rospy.Duration(self.timeout)
+        else:
+            timeout = rospy.Duration()
         transform_stamped = self._tf2_buffer.lookup_transform(target_frame,
                                                               source_frame,
                                                               time,

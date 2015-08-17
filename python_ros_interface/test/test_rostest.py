@@ -19,7 +19,7 @@ class TestROSTest(unittest.TestCase):
         launch_file = os.path.join(os.path.dirname(__file__), 'ros_interface.test')
         master.launch(launch_file)
         with self.assertRaises(RuntimeError):
-            with mock.patch('ronode.get_node_names') as get_node_names:
+            with mock.patch('rosnode.get_node_names') as get_node_names:
                 get_node_names.return_value = []
                 _wait_nodes('/dummy', timeout=0.5)
         with self.assertRaises(RuntimeError):

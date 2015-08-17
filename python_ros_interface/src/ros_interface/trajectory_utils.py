@@ -10,7 +10,7 @@ def remove_invalid(traj):
 
     Args:
         traj:
-    Retrun:
+    Return:
         :class:`JointTrajectory`
     """
     valid_indices = set(range(len(traj.joint_names)))
@@ -35,7 +35,7 @@ def add(traj1, traj2):
     Args:
         traj1:
         traj2:
-    Retrun:
+    Return:
         :class:`JointTrajectory`
     """
     new_joint_trajectory = JointTrajectory(joint_names=traj1.joint_names+traj2.joint_names)
@@ -55,10 +55,10 @@ def extract(joint_names, joint_trajectory):
     Args:
         joint_names:
         joint_trajectory:
-    Retrun:
+    Return:
         :class:`JointTrajectory`
     Raises:
-        RuntimeError:
+        RuntimeError
     """
     out_joint_names = [joint_name for joint_name in joint_names
                        if joint_name in joint_trajectory.joint_names]

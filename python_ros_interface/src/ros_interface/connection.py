@@ -1,19 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# pylint: disable=no-member
 
 import rospy
-from .tf_wrapper import TfWrapper
-from .exceptions import *
+from .tf2_wrapper import Tf2Wrapper
 
 class _ROSConnection(object):
     u"""
     Singleton class to manage connection with ROS Network
+
+    Attributes:
+        tf:
     """
     def __init__(self):
-        self.tf = TfWrapper()
+        self.tf = Tf2Wrapper()
 
     def init(self):
+        u"""
+        Initialize
+        """
         if not rospy.core.is_initialized():
             rospy.init_node('ros_interface', anonymous=True)
         self.tf.init()
